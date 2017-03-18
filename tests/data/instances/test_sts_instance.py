@@ -131,4 +131,3 @@ class TestIndexedSTSInstance(TestCase):
         inputs = self.instance.as_testing_data()
         assert_allclose(inputs[0], np.asarray([1, 2, 3, 5]))
         assert_allclose(inputs[1], np.asarray([1, 8, 2, 3]))
-

@@ -1,6 +1,3 @@
-from ..data_indexer import DataIndexer
-
-
 class SpacyWordTokenizer():
     """
     A Tokenizer splits strings into word tokens.
@@ -22,11 +19,3 @@ class SpacyWordTokenizer():
     def index_text(self, text, data_indexer):
         return [data_indexer.get_word_index(word) for word in
                 self.get_words_for_indexer(text)]
-
-    # @overrides
-    # def get_sentence_shape(self, sentence_length: int, word_length: int) -> Tuple[int]:
-    #     return (sentence_length,)
-
-    # @overrides
-    # def get_max_lengths(self, sentence_length: int, word_length: int) -> Dict[str, int]:
-    #     return {'num_sentence_words': sentence_length}

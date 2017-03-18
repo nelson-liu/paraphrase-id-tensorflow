@@ -1,4 +1,4 @@
-from duplicate_questions.data.dataset import Dataset, TextDataset
+from duplicate_questions.data.dataset import TextDataset
 from duplicate_questions.data.instances.sts_instance import STSInstance
 
 from ..common.test_case import DuplicateTestCase

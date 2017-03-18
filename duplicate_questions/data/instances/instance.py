@@ -159,7 +159,8 @@ class TextInstance(Instance):
         We throw a ``RuntimeError`` here instead of a ``NotImplementedError``,
         because it's not expected that all subclasses will implement this.
         """
-        raise RuntimeError("%s instances can't be read from a line!" % str(cls))
+        raise RuntimeError("%s instances can't be read "
+                           "from a line!" % str(cls))
 
 
 class IndexedInstance(Instance):
@@ -251,7 +252,6 @@ class IndexedInstance(Instance):
             be a complex tuple, depending on the ``Instance`` type.
         """
         raise NotImplementedError
-
 
     @staticmethod
     def pad_word_sequence(word_sequence,
