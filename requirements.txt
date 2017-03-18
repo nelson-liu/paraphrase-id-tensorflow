@@ -14,5 +14,8 @@ overrides
 # Unit tests
 pytest
 
+# Let's pytest find our code
+pytest-pythonpath
+
 # Code style linting
 flake8
