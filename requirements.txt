@@ -1,0 +1,18 @@
+#### ESSENTIAL LIBRARIES FOR MAIN FUNCTIONALITY ####
+
+# Neural network and related libraries
+tensorflow==1.0.1
+numpy
+
+# Progress logger
+tqdm
+
+# Adds an @overrides decorator for better documentation and error checking when using subclasses.
+overrides
+
+#### TESTING-RELATED PACKAGES ####
+# Unit tests
+pytest
+
+# Code style linting
+flake8
