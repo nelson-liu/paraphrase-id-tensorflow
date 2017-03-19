@@ -205,3 +205,17 @@ class IndexedDataset(Dataset):
             inputs.append(instance_inputs)
             labels.append(label)
         return inputs, labels
+
+    def as_testing_data(self):
+        """
+        Takes each IndexedInstance and converts it into inputs,
+        according to the Instance's as_testing_data() method. Note that
+        you might need to call numpy.asarray() on the results of this; we
+        don't do that for you, because the inputs might be complicated.
+        """
+        inputs = []
+        instances = self.instances
+        for instance in instances:
+            instance_inputs = instance.as_testing_data()
+            inputs.append(instance_inputs)
+        return inputs
