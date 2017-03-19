@@ -15,7 +15,7 @@ This class has methods to deal with padding (so that sequences all have the
 same length) and converting an ``Instance`` into a set of Numpy arrays suitable
 for use with TensorFlow.
 """
-from ..tokenizers.word_tokenizers import SpacyWordTokenizer
+from ..tokenizers.word_tokenizers import NLTKWordTokenizer
 
 
 class Instance:
@@ -53,7 +53,7 @@ class TextInstance(Instance):
 
     def __init__(self, label=None, tokenizer=None):
         if not tokenizer:
-            self.tokenizer = SpacyWordTokenizer()
+            self.tokenizer = NLTKWordTokenizer()
         else:
             self.tokenizer = tokenizer()
         super(TextInstance, self).__init__(label)

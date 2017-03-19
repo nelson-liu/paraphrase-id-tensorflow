@@ -10,6 +10,9 @@ tqdm
 # Adds an @overrides decorator for better documentation and error checking when using subclasses.
 overrides
 
+# NLP tools
+nltk
+
 #### TESTING-RELATED PACKAGES ####
 # Unit tests
 pytest

@@ -1,14 +1,12 @@
-class SpacyWordTokenizer():
+import nltk
+
+
+class NLTKWordTokenizer():
     """
     A Tokenizer splits strings into word tokens.
     """
-    def __init__(self):
-        # Import is here it's slow, and can be unnecessary.
-        import spacy
-        self.en_nlp = spacy.load('en')
-
     def tokenize(self, sentence):
-        return [str(token.lower_) for token in self.en_nlp.tokenizer(sentence)]
+        return nltk.word_tokenize(sentence.lower())
 
     def get_words_for_indexer(self, text):
         return self.tokenize(text)
