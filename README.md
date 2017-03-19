@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.com/nelson-liu/quora_duplicate_questions.svg?token=nHesW4GKxvzu1T87bps4&branch=master)](https://travis-ci.com/nelson-liu/quora_duplicate_questions)
+[![codecov](https://codecov.io/gh/nelson-liu/quora_duplicate_questions/branch/master/graph/badge.svg?token=WdeMLb9nuw)](https://codecov.io/gh/nelson-liu/quora_duplicate_questions)
+
 quora_duplicate_questions
 ==============================
 
