@@ -1,0 +1,25 @@
+# use new container-based travis workers
+sudo: false
+dist: trusty
+
+language: python
+
+cache:
+  directories:
+  - /home/travis/download
+  - /home/travis/.cache/pip
+  - /home/travis/nltk_data
+
+env:
+  matrix:
+    # Run tests with coverage
+    - COVERAGE="true"
+    # flake8 checks skip the tests
+    - RUN_FLAKE8="true" SKIP_TESTS="true"
+
+notifications:
+  email: false
+
+install: source build_tools/travis/install.sh
+script: bash build_tools/travis/test_script.sh
+after_success: source build_tools/travis/after_success.sh
