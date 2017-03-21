@@ -12,13 +12,24 @@ from duplicate_questions.data.instances.sts_instance import STSInstance
 from ..common.test_case import DuplicateTestCase
 
 
-class TestDataset:
-    def test_merge(self):
+class TestDataset(DuplicateTestCase):
+    def test_truncate(self):
         instances = [STSInstance("testing1", "test1", None),
                      STSInstance("testing2", "test2", None)]
         dataset = Dataset(instances)
         truncated = dataset.truncate(1)
         assert len(truncated.instances) == 1
+        with self.assertRaises(ValueError):
+            truncated = dataset.truncate("1")
+        with self.assertRaises(ValueError):
+            truncated = dataset.truncate(0)
+
+    def test_exceptions(self):
+        instance = STSInstance("testing1", "test1", 0)
+        with self.assertRaises(ValueError):
+            Dataset(instance)
+        with self.assertRaises(ValueError):
+            Dataset(["not an instance"])
 
 
 class TestTextDataset(DuplicateTestCase):
@@ -38,6 +49,32 @@ class TestTextDataset(DuplicateTestCase):
         assert instance.first_sentence == "question5"
         assert instance.second_sentence == "question6"
         assert instance.label == 0
+        with self.assertRaises(ValueError):
+            TextDataset.read_from_file(3, STSInstance)
+
+    def test_read_from_lines(self):
+        self.write_duplicate_questions_train_file()
+        lines = ["\"1\",\"2\",\"3\",\"question1\",\"question2\",\"0\"\n",
+                 "\"4\",\"5\",\"6\",\"question3\",\"question4\",\"1\"\n",
+                 "\"7\",\"8\",\"9\",\"question5\",\"question6\",\"0\"\n"]
+        dataset = TextDataset.read_from_lines(lines, STSInstance)
+        assert len(dataset.instances) == 3
+        instance = dataset.instances[0]
+        assert instance.first_sentence == "question1"
+        assert instance.second_sentence == "question2"
+        assert instance.label == 0
+        instance = dataset.instances[1]
+        assert instance.first_sentence == "question3"
+        assert instance.second_sentence == "question4"
+        assert instance.label == 1
+        instance = dataset.instances[2]
+        assert instance.first_sentence == "question5"
+        assert instance.second_sentence == "question6"
+        assert instance.label == 0
+        with self.assertRaises(ValueError):
+            TextDataset.read_from_lines("some line", STSInstance)
+        with self.assertRaises(ValueError):
+            TextDataset.read_from_lines([3], "STSInstance")
 
     def test_read_from_test_file(self):
         self.write_duplicate_questions_test_file()
@@ -55,6 +92,8 @@ class TestTextDataset(DuplicateTestCase):
         assert instance.first_sentence == "question5"
         assert instance.second_sentence == "question6"
         assert instance.label is None
+        with self.assertRaises(ValueError):
+            TextDataset.read_from_file(3, STSInstance)
 
     def test_to_indexed_dataset(self):
         instances = [STSInstance("testing1 test1", "test1", None),

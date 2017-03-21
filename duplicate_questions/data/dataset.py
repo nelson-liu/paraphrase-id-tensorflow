@@ -4,6 +4,8 @@ import logging
 
 import tqdm
 
+from .instances.instance import Instance
+
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
@@ -23,6 +25,15 @@ class Dataset:
         instances: List of Instance
             The list of instances to build a Dataset from.
         """
+        if not isinstance(instances, list):
+            raise ValueError("Expected instances to be type "
+                             "List, found {} of type "
+                             "{}".format(instances, type(instances)))
+        if not isinstance(instances[0], Instance):
+            raise ValueError("Expected instances to be a List "
+                             "of Instances, but the first element "
+                             "of the input list was {} of type "
+                             "{}".format(instances[0], type(instances[0])))
         self.instances = instances
 
     def truncate(self, max_instances):
@@ -38,6 +49,13 @@ class Dataset:
             If there are fewer than `max_instances` already, we just return
             self.
         """
+        if not isinstance(max_instances, int):
+            raise ValueError("Expected max_instances to be type "
+                             "int, found {} of type "
+                             "{}".format(max_instances, type(max_instances)))
+        if max_instances < 1:
+            raise ValueError("max_instances must be at least 1"
+                             ", found {}".format(max_instances))
         if len(self.instances) <= max_instances:
             return self
         new_instances = [i for i in self.instances]
@@ -94,6 +112,10 @@ class TextDataset(Dataset):
         text_dataset: TextDataset
            A new TextDataset with the instances read from the file.
         """
+        if not isinstance(filename, str):
+            raise ValueError("Expected filename to be a string, "
+                             "but was {} of type "
+                             "{}".format(filename, type(filename)))
         lines = [x.strip() for x
                  in tqdm.tqdm(codecs.open(filename, "r",
                                           "utf-8").readlines())]
@@ -119,6 +141,14 @@ class TextDataset(Dataset):
         text_dataset: TextDataset
            A new TextDataset with the instances read from the list.
         """
+        if not isinstance(lines, list):
+            raise ValueError("Expected lines to be a list, "
+                             "but was {} of type "
+                             "{}".format(lines, type(lines)))
+        if not isinstance(lines[0], str):
+            raise ValueError("Expected lines to be a list of strings, "
+                             "but the first element of the list was {} "
+                             "of type {}".format(lines[0], type(lines[0])))
         instances = [instance_class.read_from_line(line) for line in lines]
         labels = [(x.label, x) for x in instances]
         labels.sort(key=lambda x: str(x[0]))
@@ -168,7 +198,6 @@ class IndexedDataset(Dataset):
 
         This method _modifies_ the current object, it does not return a new
         IndexedDataset.
-
         """
         # First we need to decide _how much_ to pad. To do that, we find the
         # max length for all relevant padding decisions from the instances
