@@ -1,6 +1,8 @@
 from collections import Counter
 import logging
 
+from .dataset import Dataset
+
 import tqdm
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
@@ -44,6 +46,15 @@ class DataIndexer:
         min_count: int The minimum number of times a word must occur in order
             to be indexed.
         """
+        if not isinstance(dataset, Dataset):
+            raise ValueError("Expected dataset to be type "
+                             "Dataset, found {} of type "
+                             "{}".format(dataset, type(dataset)))
+        if not isinstance(min_count, int):
+            raise ValueError("Expected min_count to be type "
+                             "int, found {} of type "
+                             "{}".format(min_count, type(min_count)))
+
         logger.info("Fitting word dictionary with min count of %d", min_count)
         word_counts = Counter()
         for instance in tqdm.tqdm(dataset.instances):
@@ -58,7 +69,21 @@ class DataIndexer:
         """
         Adds `word` to the index, if it is not already present. Either way, we
         return the index of the word.
+
+        Parameters
+        ----------
+        word: str
+            A string to be added to the indexer.
+
+        Returns
+        -------
+        index: int
+            The index of the input word.
         """
+        if not isinstance(word, str):
+            raise ValueError("Expected word to be type "
+                             "str, found {} of type "
+                             "{}".format(word, type(word)))
         if word not in self.word_indices:
             index = len(self.word_indices)
             self.word_indices[word] = index
@@ -68,16 +93,67 @@ class DataIndexer:
             return self.word_indices[word]
 
     def words_in_index(self):
+        """
+        Returns a list of the words in the index.
+
+        Returns
+        -------
+        word_list: List of str
+            A list of the words added to this DataIndexer.
+        """
         return self.word_indices.keys()
 
     def get_word_index(self, word):
+        """
+        Get the index of a word.
+
+        Parameters
+        ----------
+        word: str
+            A string to return the index of.
+
+        Returns
+        -------
+        index: int
+            The index of the input word if it is in the index, or the index
+            corresponding to the OOV token if it is not.
+        """
+        if not isinstance(word, str):
+            raise ValueError("Expected word to be type "
+                             "str, found {} of type "
+                             "{}".format(word, type(word)))
         if word in self.word_indices:
             return self.word_indices[word]
         else:
             return self.word_indices[self._oov_token]
 
     def get_word_from_index(self, index):
+        """
+        Get the word corresponding to an input index.
+
+        Parameters
+        ----------
+        index: int
+            The int index to retrieve the word from.
+
+        Returns
+        -------
+        word: str
+            The string word occupying the input index.
+        """
+        if not isinstance(index, int):
+            raise ValueError("Expected index to be type "
+                             "int, found {} of type "
+                             "{}".format(index, type(index)))
         return self.reverse_word_indices[index]
 
     def get_vocab_size(self):
+        """
+        Get the number of words in this DataIndexer.
+
+        Returns
+        -------
+        vocab_size: int
+            The number of words added to this DataIndexer.
+        """
         return len(self.word_indices)
