@@ -3,10 +3,11 @@ import numpy as np
 from duplicate_questions.data.data_indexer import DataIndexer
 from duplicate_questions.data.instances.sts_instance import IndexedSTSInstance
 from duplicate_questions.data.instances.sts_instance import STSInstance
-from unittest import TestCase
+
+from ...common.test_case import DuplicateTestCase
 
 
-class TestSTSInstance(TestCase):
+class TestSTSInstance(DuplicateTestCase):
     @staticmethod
     def instance_to_line(id, question1, question2,
                          is_duplicate=None, qid1=None, qid2=None):
@@ -43,6 +44,8 @@ class TestSTSInstance(TestCase):
         assert instance.first_sentence == question1
         assert instance.second_sentence == question2
         assert instance.label == 0
+        with self.assertRaises(RuntimeError):
+            STSInstance.read_from_line("This is not a proper line.")
 
     def test_to_indexed_instance_converts_correctly(self):
         instance = STSInstance("What do dogs eat?",
@@ -88,7 +91,7 @@ class TestSTSInstance(TestCase):
                                         "sentence", "."]
 
 
-class TestIndexedSTSInstance(TestCase):
+class TestIndexedSTSInstance(DuplicateTestCase):
     def setUp(self):
         super(TestIndexedSTSInstance, self).setUp()
         self.instance = IndexedSTSInstance([1, 2, 3, 5, 6],
@@ -125,6 +128,13 @@ class TestIndexedSTSInstance(TestCase):
         assert_allclose(label, np.asarray([0, 1]))
         assert_allclose(inputs[0], np.asarray([1, 2, 3]))
         assert_allclose(inputs[1], np.asarray([1, 8, 2]))
+
+        test_instance = IndexedSTSInstance([1, 2, 3, 5, 6],
+                                           [1, 8, 2, 3],
+                                           None)
+        test_instance.pad(test_instance.get_lengths())
+        with self.assertRaises(ValueError):
+            test_instance.as_training_data()
 
     def test_as_testing_data_produces_correct_numpy_arrays(self):
         self.instance.pad({'num_sentence_words': 4})
