@@ -61,6 +61,8 @@ class TestTextDataset(DuplicateTestCase):
         assert instance.label == 0
         with self.assertRaises(ValueError):
             TextDataset.read_from_file(3, STSInstance)
+        with self.assertRaises(ValueError):
+            TextDataset.read_from_file([3], STSInstance)
 
     def test_read_from_lines(self):
         self.write_duplicate_questions_train_file()

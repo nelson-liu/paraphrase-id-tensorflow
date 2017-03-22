@@ -108,15 +108,16 @@ class TextDataset(Dataset):
         return IndexedDataset(indexed_instances)
 
     @staticmethod
-    def read_from_file(filename, instance_class):
+    def read_from_file(filenames, instance_class):
         """
         Read a dataset (basically a list of Instances) from
         a data file.
 
         Parameters
         ----------
-        filename: str
-            The string filename from which to read the instances.
+        filenames: str or List of str
+            The string filename from which to read the instances, or a List of
+            strings repesenting the files to pull instances from..
 
         instance_class: Instance
             The Instance class to create from these lines.
@@ -126,13 +127,18 @@ class TextDataset(Dataset):
         text_dataset: TextDataset
            A new TextDataset with the instances read from the file.
         """
-        if not isinstance(filename, str):
+        if (not isinstance(filenames, str) or
+                (isinstance(filenames, list) and
+                 isinstance(filenames[0], str))):
             raise ValueError("Expected filename to be a string, "
+                             "or List of strings "
                              "but was {} of type "
-                             "{}".format(filename, type(filename)))
-        lines = [x.strip() for x
-                 in tqdm.tqdm(codecs.open(filename, "r",
-                                          "utf-8").readlines())]
+                             "{}".format(filenames, type(filenames)))
+        if not isinstance(filenames, list):
+            filenames = [filenames]
+        lines = [x.strip() for filename in filenames
+                 for x in tqdm.tqdm(codecs.open(filename,
+                                                "r", "utf-8").readlines())]
         return TextDataset.read_from_lines(lines, instance_class)
 
     @staticmethod
