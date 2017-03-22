@@ -36,6 +36,20 @@ class Dataset:
                              "{}".format(instances[0], type(instances[0])))
         self.instances = instances
 
+    def merge(self, other):
+        """
+        Combine two datasets. If you call try to merge two Datasets of the same
+        subtype, you will end up with a Dataset of the same type (i.e., calling
+        IndexedDataset.merge() with another IndexedDataset will return an
+        IndexedDataset). If the types differ, this method currently raises an
+        error, because the underlying Instance objects are not currently type
+        compatible.
+        """
+        if type(self) is type(other):
+            return self.__class__(self.instances + other.instances)
+        else:
+            raise ValueError("Cannot merge datasets with different types")
+
     def truncate(self, max_instances):
         """
         Truncate the dataset to a fixed size.

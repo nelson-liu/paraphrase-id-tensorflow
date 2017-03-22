@@ -24,6 +24,16 @@ class TestDataset(DuplicateTestCase):
         with self.assertRaises(ValueError):
             truncated = dataset.truncate(0)
 
+    def test_merge(self):
+        instances = [STSInstance("testing1", "test1", None),
+                     STSInstance("testing2", "test2", None)]
+        dataset1 = Dataset(instances[:1])
+        dataset2 = Dataset(instances[1:])
+        merged = dataset1.merge(dataset2)
+        assert merged.instances == instances
+        with self.assertRaises(ValueError):
+            merged = dataset1.merge(instances)
+
     def test_exceptions(self):
         instance = STSInstance("testing1", "test1", 0)
         with self.assertRaises(ValueError):
