@@ -117,7 +117,9 @@ class TextDataset(Dataset):
         ----------
         filenames: str or List of str
             The string filename from which to read the instances, or a List of
-            strings repesenting the files to pull instances from..
+            strings repesenting the files to pull instances from. If a string
+            is passed in, it is automatically converted to a single-element
+            list.
 
         instance_class: Instance
             The Instance class to create from these lines.
@@ -127,15 +129,15 @@ class TextDataset(Dataset):
         text_dataset: TextDataset
            A new TextDataset with the instances read from the file.
         """
-        if (not isinstance(filenames, str) or
-                (isinstance(filenames, list) and
-                 isinstance(filenames[0], str))):
-            raise ValueError("Expected filename to be a string, "
-                             "or List of strings "
+        if isinstance(filenames, str):
+            filenames = [filenames]
+        # If filenames is not a list, throw an error. If it is a list,
+        # but the first element isn't a string, also throw an error.
+        if not isinstance(filenames, list) or not isinstance(filenames[0],
+                                                             str):
+            raise ValueError("Expected filename to be a List of strings "
                              "but was {} of type "
                              "{}".format(filenames, type(filenames)))
-        if not isinstance(filenames, list):
-            filenames = [filenames]
         lines = [x.strip() for filename in filenames
                  for x in tqdm.tqdm(codecs.open(filename,
                                                 "r", "utf-8").readlines())]
