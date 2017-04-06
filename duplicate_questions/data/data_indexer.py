@@ -61,7 +61,12 @@ class DataIndexer:
             instance_words = instance.words()
             for word in instance_words:
                 word_counts[word] += 1
-        for word, count in word_counts.items():
+        # Index the dataset, sorted by order of decreasing frequency, and then
+        # alphabetically for ties.
+        sorted_word_counts = sorted(word_counts.items(),
+                                    key=lambda pair: (-pair[1],
+                                                      pair[0]))
+        for word, count in sorted_word_counts:
             if count >= min_count:
                 self.add_word_to_index(word)
 

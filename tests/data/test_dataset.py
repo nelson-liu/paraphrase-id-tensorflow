@@ -49,15 +49,15 @@ class TestTextDataset(DuplicateTestCase):
         assert len(dataset.instances) == 3
         instance = dataset.instances[0]
         assert instance.first_sentence == "question1"
-        assert instance.second_sentence == "question2"
+        assert instance.second_sentence == "question2 question3"
         assert instance.label == 0
         instance = dataset.instances[1]
-        assert instance.first_sentence == "question3"
-        assert instance.second_sentence == "question4"
+        assert instance.first_sentence == "question4"
+        assert instance.second_sentence == "question5"
         assert instance.label == 1
         instance = dataset.instances[2]
-        assert instance.first_sentence == "question5"
-        assert instance.second_sentence == "question6"
+        assert instance.first_sentence == "question6"
+        assert instance.second_sentence == "question7"
         assert instance.label == 0
         with self.assertRaises(ValueError):
             TextDataset.read_from_file(3, STSInstance)
@@ -93,12 +93,12 @@ class TestTextDataset(DuplicateTestCase):
         dataset = TextDataset.read_from_file(self.TEST_FILE, STSInstance)
         assert len(dataset.instances) == 3
         instance = dataset.instances[0]
-        assert instance.first_sentence == "question1"
+        assert instance.first_sentence == "question1 question2 question1"
         assert instance.second_sentence == "question2"
         assert instance.label is None
         instance = dataset.instances[1]
         assert instance.first_sentence == "question3"
-        assert instance.second_sentence == "question4"
+        assert instance.second_sentence == "question4 question5"
         assert instance.label is None
         instance = dataset.instances[2]
         assert instance.first_sentence == "question5"
