@@ -27,7 +27,7 @@ class DataIndexer:
         self.reverse_word_indices = {0: self._padding_token,
                                      1: self._oov_token}
 
-    def fit_word_dictionary(self, dataset, min_count):
+    def fit_word_dictionary(self, dataset, min_count=1):
         """
         Given a Dataset, this method decides which words are given an index,
         and which ones are mapped to an OOV token (in this case "@@UNKNOWN@@").
