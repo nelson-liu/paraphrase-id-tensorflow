@@ -24,6 +24,7 @@ class DataIndexer:
         self._padding_token = "@@PADDING@@"
         self._oov_token = "@@UNKOWN@@"
         self.word_indices = {self._padding_token: 0, self._oov_token: 1}
+        self.is_fit = False
         self.reverse_word_indices = {0: self._padding_token,
                                      1: self._oov_token}
 
@@ -70,6 +71,7 @@ class DataIndexer:
         for word, count in sorted_word_counts:
             if count >= min_count:
                 self.add_word_to_index(word)
+        self.is_fit = True
 
     def add_word_to_index(self, word):
         """
