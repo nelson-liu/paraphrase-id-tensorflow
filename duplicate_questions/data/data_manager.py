@@ -1,0 +1,387 @@
+import logging
+import numpy as np
+
+from .data_indexer import DataIndexer
+from .dataset import TextDataset
+
+logger = logging.getLogger(__name__)
+
+
+class DataManager():
+    """
+    The goal of this class is to act as a centralized place
+    to do high-level operations on your data (i.e. loading them from filename
+    to NumPy arrays).
+    """
+
+    def __init__(self, instance_type):
+        self.data_indexer = DataIndexer()
+        self.instance_type = instance_type
+        # List of lists of filenames that self.data_indexer
+        # has been fit on.
+        self.data_indexer_fitted = False
+        self.training_data_max_lengths = {}
+
+    def get_train_data_from_file(self, filenames, min_count=1,
+                                 max_instances=None,
+                                 max_lengths=None, pad=True):
+        """
+        Given a filename or list of filenames, return a generator for producing
+        individual instances of data ready for use in a model read from those
+        file(s).
+
+        Given a string path to a file in the format accepted by the instance,
+        we fit the data_indexer word dictionary on it. Next, we use this
+        DataIndexer to convert the instance into IndexedInstances (replacing
+        words with integer indices).
+
+        This function returns a generator that takes these IndexedInstances,
+        pads them to the appropriate lengths (either the maximum lengths in the
+        dataset, or lengths specified in the constructor), and then converts
+        them to NumPy arrays suitable for training with
+        instance.as_training_data. The generator yields one instance at a time,
+        represented as tuples of (inputs, labels).
+
+        Parameters
+        ----------
+        filenames: List[str]
+            A collection of filenames to read the specific self.instance_type
+            from, line by line.
+
+        min_count: int, default=1
+            The minimum number of times a word must occur in order
+            to be indexed.
+
+        max_instances: int, default=None
+            If not None, the maximum number of instances to produce as
+            training data. If necessary, we will truncate the dataset.
+            Useful for debugging and making sure things work with small
+            amounts of data.
+
+        max_lengths: dict from str to int, default=None
+            If not None, the max length of a sequence in a given dimension.
+            The keys for this dict must be in the same format as
+            the instances' get_lengths() function. These are the lengths
+            that the instances are padded or truncated to.
+
+        pad: boolean, default=True
+            If True, pads or truncates the instances to either the input
+            max_lengths or max_lengths across the train filenames. If False,
+            no padding or truncation is applied.
+        """
+        if self.data_indexer_fitted:
+            raise ValueError("You have already called get_train_data from "
+                             "this DataManager, so you cannnot do it again. "
+                             "If you want to train on multiple datasets, pass "
+                             "in a list of files.")
+        logger.info("Getting training data from {}".format(filenames))
+        training_dataset = TextDataset.read_from_file(filenames,
+                                                      self.instance_type)
+        if max_instances:
+            logger.info("Truncating the training dataset "
+                        "to {} instances".format(max_instances))
+            training_dataset = training_dataset.truncate(max_instances)
+
+        # Since this is data for training, we fit the data indexer
+        logger.info("Fitting data indexer word "
+                    "dictionary, min_count is {}.".format(min_count))
+        self.data_indexer.fit_word_dictionary(training_dataset,
+                                              min_count=min_count)
+        self.data_indexer_fitted = True
+
+        # With our fitted data indexer, we we convert the dataset
+        # from string tokens to numeric int indices.
+        logger.info("Indexing dataset")
+        indexed_training_dataset = training_dataset.to_indexed_dataset(
+            self.data_indexer)
+
+        # We now need to check if the user specified max_lengths for
+        # the instance, and accordingly truncate or pad if applicable. If
+        # max_lengths is None for a given string key, we assume that no
+        # truncation is to be done and the max lengths should be read from the
+        # instances.
+        if not pad and max_lengths:
+            raise ValueError("Passed in max_lengths {}, but set pad to false. "
+                             "Did you mean to do this?".format(max_lengths))
+
+        # Get max lengths from the dataset
+        dataset_max_lengths = indexed_training_dataset.max_lengths()
+        logger.info("Instance max lengths {}".format(dataset_max_lengths))
+        max_lengths_to_use = dataset_max_lengths
+        if pad:
+            # If the user set max lengths, iterate over the
+            # dictionary provided and verify that they did not
+            # pass any keys to truncate that are not in the instance.
+            if max_lengths is not None:
+                for input_dimension, length in max_lengths.items():
+                    if input_dimension in dataset_max_lengths:
+                        max_lengths_to_use[input_dimension] = length
+                    else:
+                        raise ValueError("Passed a value for the max_lengths "
+                                         "that does not exist in the "
+                                         "instance. Improper input length "
+                                         "dimension (key) we found was {}, "
+                                         "lengths dimensions in the instance "
+                                         "are {}".format(
+                                             input_dimension,
+                                             dataset_max_lengths.keys()))
+            logger.info("Padding lengths to "
+                        "length: {}".format(str(max_lengths_to_use)))
+        self.training_data_max_lengths = max_lengths_to_use
+
+        # This is a hack to get the function to run the code above immediately,
+        # instead of doing the standard python generator lazy-ish evaluation.
+        # This is necessary to set the class variables ASAP.
+        def _train_data_generator():
+            for indexed_instance in indexed_training_dataset.instances:
+                # For each instance, we want to pad or truncate if applicable
+                if pad:
+                    indexed_instance.pad(max_lengths_to_use)
+                # Now, we want to take the instance and convert it into
+                # NumPy arrays suitable for training.
+                inputs, labels = indexed_instance.as_training_data()
+                # Handle datasets with multiple inputs, where we are returned
+                # a tuple of inputs.
+                if isinstance(inputs[0], tuple):
+                    inputs = [np.asarray(x) for x in zip(*inputs)]
+                else:
+                    inputs = np.asarray(inputs)
+
+                # Handle datasets with multiple labels, where we are returned
+                # a tuple of labels.
+                if isinstance(labels[0], tuple):
+                    labels = [np.asarray(x) for x in zip(*labels)]
+                else:
+                    labels = np.asarray(labels)
+                yield inputs, labels
+        return _train_data_generator()
+
+    def get_validation_data_from_file(self, filenames, max_instances=None,
+                                      max_lengths=None, pad=True):
+        """
+        Given a filename or list of filenames, return a generator for producing
+        individual instances of data ready for use as validation data in a
+        model read from those file(s).
+
+        Given a string path to a file in the format accepted by the instance,
+        we use a data_indexer previously fitted on train data. Next, we use
+        this DataIndexer to convert the instance into IndexedInstances
+        (replacing words with integer indices).
+
+        This function returns a generator that takes these IndexedInstances,
+        pads them to the appropriate lengths (either the maximum lengths in the
+        dataset, or lengths specified in the constructor), and then converts
+        them to NumPy arrays suitable for validation with
+        instance.as_training_data. The generator yields one instance at a time,
+        represented as tuples of (inputs, labels).
+
+        Parameters
+        ----------
+        filenames: List[str]
+            A collection of filenames to read the specific self.instance_type
+            from, line by line.
+
+        max_instances: int, default=None
+            If not None, the maximum number of instances to produce as
+            training data. If necessary, we will truncate the dataset.
+            Useful for debugging and making sure things work with small
+            amounts of data.
+
+        max_lengths: dict from str to int, default=None
+            If not None, the max length of a sequence in a given dimension.
+            The keys for this dict must be in the same format as
+            the instances' get_lengths() function. These are the lengths
+            that the instances are padded or truncated to.
+
+        pad: boolean, default=True
+            If True, pads or truncates the instances to either the input
+            max_lengths or max_lengths used on the train filenames. If False,
+            no padding or truncation is applied.
+        """
+        logger.info("Getting validation data from {}".format(filenames))
+        validation_dataset = TextDataset.read_from_file(filenames,
+                                                        self.instance_type)
+        if max_instances:
+            logger.info("Truncating the validation dataset "
+                        "to {} instances".format(max_instances))
+            validation_dataset = validation_dataset.truncate(max_instances)
+
+        # With our fitted data indexer, we we convert the dataset
+        # from string tokens to numeric int indices.
+        logger.info("Indexing validation dataset with "
+                    "DataIndexer fit on train data.")
+        indexed_validation_dataset = validation_dataset.to_indexed_dataset(
+            self.data_indexer)
+
+        # We now need to check if the user specified max_lengths for
+        # the instance, and accordingly truncate or pad if applicable. If
+        # max_lengths is None for a given string key, we assume that no
+        # truncation is to be done and the max lengths should be taken from
+        # the train dataset.
+        if not pad and max_lengths:
+            raise ValueError("Passed in max_lengths {}, but set pad to false. "
+                             "Did you mean to do this?".format(max_lengths))
+        if pad:
+            # Get max lengths from the train dataset
+            training_data_max_lengths = self.training_data_max_lengths
+            logger.info("Max lengths in training "
+                        "data: {}".format(training_data_max_lengths))
+
+            max_lengths_to_use = training_data_max_lengths
+            # If the user set max lengths, iterate over the
+            # dictionary provided and verify that they did not
+            # pass any keys to truncate that are not in the instance.
+            if max_lengths is not None:
+                for input_dimension, length in max_lengths.items():
+                    if input_dimension in training_data_max_lengths:
+                        max_lengths_to_use[input_dimension] = length
+                    else:
+                        raise ValueError("Passed a value for the max_lengths "
+                                         "that does not exist in the "
+                                         "instance. Improper input length "
+                                         "dimension (key) we found was {}, "
+                                         "lengths dimensions in the instance "
+                                         "are {}".format(
+                                             input_dimension,
+                                             training_data_max_lengths.keys()))
+            logger.info("Padding lengths to "
+                        "length: {}".format(str(max_lengths_to_use)))
+
+        # This is a hack to get the function to run the code above immediately,
+        # instead of doing the standard python generator lazy-ish evaluation.
+        # This is necessary to set the class variables ASAP.
+        def _validation_data_generator():
+            for indexed_val_instance in indexed_validation_dataset.instances:
+                # For each instance, we want to pad or truncate if applicable
+                if pad:
+                    indexed_val_instance.pad(max_lengths_to_use)
+                # Now, we want to take the instance and convert it into
+                # NumPy arrays suitable for validation.
+                inputs, labels = indexed_val_instance.as_training_data()
+
+                # Handle datasets with multiple inputs, where we are returned
+                # a tuple of inputs.
+                if isinstance(inputs[0], tuple):
+                    inputs = [np.asarray(x) for x in zip(*inputs)]
+                else:
+                    inputs = np.asarray(inputs)
+
+                # Handle datasets with multiple labels, where we are returned
+                # a tuple of labels.
+                if isinstance(labels[0], tuple):
+                    labels = [np.asarray(x) for x in zip(*labels)]
+                else:
+                    labels = np.asarray(labels)
+                yield inputs, labels
+        return _validation_data_generator()
+
+    def get_test_data_from_file(self, filenames, max_instances=None,
+                                max_lengths=None, pad=True):
+        """
+        Given a filename or list of filenames, return a generator for producing
+        individual instances of data ready for use as model test data.
+
+        Given a string path to a file in the format accepted by the instance,
+        we use a data_indexer previously fitted on train data. Next, we use
+        this DataIndexer to convert the instance into IndexedInstances
+        (replacing words with integer indices).
+
+        This function returns a generator that takes these IndexedInstances,
+        pads them to the appropriate lengths (either the maximum lengths in the
+        dataset, or lengths specified in the constructor), and then converts
+        them to NumPy arrays suitable for testing with
+        instance.as_training_data. The generator yields one instance at a time,
+        represented as tuples of (inputs, labels).
+
+        Parameters
+        ----------
+        filenames: List[str]
+            A collection of filenames to read the specific self.instance_type
+            from, line by line.
+
+        max_instances: int, default=None
+            If not None, the maximum number of instances to produce as
+            training data. If necessary, we will truncate the dataset.
+            Useful for debugging and making sure things work with small
+            amounts of data.
+
+        max_lengths: dict from str to int, default=None
+            If not None, the max length of a sequence in a given dimension.
+            The keys for this dict must be in the same format as
+            the instances' get_lengths() function. These are the lengths
+            that the instances are padded or truncated to.
+
+        pad: boolean, default=True
+            If True, pads or truncates the instances to either the input
+            max_lengths or max_lengths used on the train filenames. If False,
+            no padding or truncation is applied.
+        """
+        logger.info("Getting test data from {}".format(filenames))
+        test_dataset = TextDataset.read_from_file(filenames,
+                                                  self.instance_type)
+        if max_instances:
+            logger.info("Truncating the test dataset "
+                        "to {} instances".format(max_instances))
+            test_dataset = test_dataset.truncate(max_instances)
+
+        # With our fitted data indexer, we we convert the dataset
+        # from string tokens to numeric int indices.
+        logger.info("Indexing test dataset with DataIndexer "
+                    "fit on train data.")
+        indexed_test_dataset = test_dataset.to_indexed_dataset(
+            self.data_indexer)
+
+        # We now need to check if the user specified max_lengths for
+        # the instance, and accordingly truncate or pad if applicable. If
+        # max_lengths is None for a given string key, we assume that no
+        # truncation is to be done and the max lengths should be taken from
+        # the train dataset.
+        if not pad and max_lengths:
+            raise ValueError("Passed in max_lengths {}, but set pad to false. "
+                             "Did you mean to do this?".format(max_lengths))
+        if pad:
+            # Get max lengths from the train dataset
+            training_data_max_lengths = self.training_data_max_lengths
+            logger.info("Max lengths in training "
+                        "data: {}".format(training_data_max_lengths))
+
+            max_lengths_to_use = training_data_max_lengths
+            # If the user set max lengths, iterate over the
+            # dictionary provided and verify that they did not
+            # pass any keys to truncate that are not in the instance.
+            if max_lengths is not None:
+                for input_dimension, length in max_lengths.items():
+                    if input_dimension in training_data_max_lengths:
+                        max_lengths_to_use[input_dimension] = length
+                    else:
+                        raise ValueError("Passed a value for the max_lengths "
+                                         "that does not exist in the "
+                                         "instance. Improper input length "
+                                         "dimension (key) we found was {}, "
+                                         "lengths dimensions in the instance "
+                                         "are {}".format(
+                                             input_dimension,
+                                             training_data_max_lengths.keys()))
+            logger.info("Padding lengths to "
+                        "length: {}".format(str(max_lengths_to_use)))
+
+        # This is a hack to get the function to run the code above immediately,
+        # instead of doing the standard python generator lazy-ish evaluation.
+        # This is necessary to set the class variables ASAP.
+        def _test_data_generator():
+            for indexed_test_instance in indexed_test_dataset.instances:
+                # For each instance, we want to pad or truncate if applicable
+                if pad:
+                    indexed_test_instance.pad(max_lengths_to_use)
+                # Now, we want to take the instance and convert it into
+                # NumPy arrays suitable for validation.
+                inputs = indexed_test_instance.as_testing_data()
+
+                # Handle datasets with multiple inputs, where we are returned
+                # a tuple of inputs.
+                if isinstance(inputs[0], tuple):
+                    inputs = [np.asarray(x) for x in zip(*inputs)]
+                else:
+                    inputs = np.asarray(inputs)
+                yield inputs
+        return _test_data_generator()

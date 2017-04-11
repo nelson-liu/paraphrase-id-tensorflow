@@ -43,7 +43,8 @@ class DataIndexer:
         dataset: Dataset
             The dataset to index.
 
-        min_count: int The minimum number of times a word must occur in order
+        min_count: int
+            The minimum number of times a word must occur in order
             to be indexed.
         """
         if not isinstance(dataset, Dataset):

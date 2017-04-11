@@ -93,12 +93,12 @@ class TestTextDataset(DuplicateTestCase):
         dataset = TextDataset.read_from_file(self.TEST_FILE, STSInstance)
         assert len(dataset.instances) == 3
         instance = dataset.instances[0]
-        assert instance.first_sentence == "question1 question2 question1"
-        assert instance.second_sentence == "question2"
+        assert instance.first_sentence == "question1 questionunk1 question1"
+        assert instance.second_sentence == "questionunk2"
         assert instance.label is None
         instance = dataset.instances[1]
         assert instance.first_sentence == "question3"
-        assert instance.second_sentence == "question4 question5"
+        assert instance.second_sentence == "question4 questionunk3"
         assert instance.label is None
         instance = dataset.instances[2]
         assert instance.first_sentence == "question5"
