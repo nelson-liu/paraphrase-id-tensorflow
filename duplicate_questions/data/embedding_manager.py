@@ -107,7 +107,7 @@ class EmbeddingManager():
                                          "file at pretrained_embeddings_"
                                          "file_path has embeddings of "
                                          "size {}".format(embedding_dim,
-                                                          len(fields)-1))
+                                                          len(fields) - 1))
                     word = fields[0]
                     vector = np.array(fields[1:], dtype='float32')
                     embeddings_from_file[word] = vector

@@ -13,6 +13,9 @@ overrides
 # NLP tools
 nltk
 
+# Argument parsing / config
+argparse
+
 #### TESTING-RELATED PACKAGES ####
 # Unit tests
 pytest
