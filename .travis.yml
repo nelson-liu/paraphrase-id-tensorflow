@@ -4,6 +4,10 @@ dist: trusty
 
 language: python
 
+branches:
+  only:
+  - master
+
 cache:
   directories:
   - /home/travis/download
