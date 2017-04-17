@@ -16,10 +16,6 @@ PYTHON_INTERPRETER = python3
 requirements:
 	pip install -r requirements.txt
 
-## Make Dataset
-data: requirements
-	$(PYTHON_INTERPRETER) src/data/make_dataset.py
-
 ## Delete all compiled Python files
 clean:
 	find . -name "*.pyc" -exec rm {} \;
@@ -32,9 +28,9 @@ lint:
 # PROJECT RULES                                                                 #
 #################################################################################
 
-# Download the 300d, Common Crawl (840B tokens) GloVe vectors.
+# Download the 6B tokens GloVe vectors.
 glove:
-	wget -P data/external/ -O data/external/glove.840B.300d.zip http://nlp.stanford.edu/data/glove.840B.300d.zip
+	wget -P data/external/ -O data/external/glove.6B.zip http://nlp.stanford.edu/data/glove.6B.zip
 
 #################################################################################
 # Self Documenting Commands                                                     #
