@@ -198,7 +198,7 @@ class IndexedSTSInstance(IndexedInstance):
         second_sentence_array = np.asarray(self.second_sentence_indices,
                                            dtype='int32')
         return ((first_sentence_array, second_sentence_array),
-                np.asarray(self.label))
+                (np.asarray(self.label),))
 
     @overrides
     def as_testing_data(self):
@@ -216,4 +216,4 @@ class IndexedSTSInstance(IndexedInstance):
                                           dtype='int32')
         second_sentence_array = np.asarray(self.second_sentence_indices,
                                            dtype='int32')
-        return (first_sentence_array, second_sentence_array)
+        return ((first_sentence_array, second_sentence_array), ())

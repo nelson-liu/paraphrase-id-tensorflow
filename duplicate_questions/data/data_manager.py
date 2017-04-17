@@ -1,5 +1,6 @@
 import logging
 import numpy as np
+from itertools import cycle, islice
 
 from .data_indexer import DataIndexer
 from .dataset import TextDataset
@@ -21,6 +22,51 @@ class DataManager():
         # has been fit on.
         self.data_indexer_fitted = False
         self.training_data_max_lengths = {}
+
+    @staticmethod
+    def batch_generator(instance_generator, batch_size):
+        """
+        Convenience function to convert a generator that yields
+        individual instances as numpy arrays into a generator
+        that yields batches of instances.
+
+        Parameters
+        ----------
+        instance_generator: numpy array generator
+            The instance_generator should generate individual training
+            instances as numpy arrays. The expected format is:
+            ((input0, input1,...), (target0, target1, ...))
+
+        batch_size: int, default=32
+            The default size of each batch
+
+        Returns
+        -------
+        output: returns a tuple of 2 tuples
+            The expected return schema is:
+            ((input0, input1, ...), (target0, target1, ...),
+            where each of "input*" and "target*" are numpy arrays.
+            The number of rows in each input and target numpy array
+            should be the same as the batch size.
+        """
+
+        # Make the instance_generator infinite (cycle on itself)
+        instance_generator = cycle(instance_generator)
+        # batched_instances is a list of batch_size instances, where each
+        # instance is a tuple ((inputs), targets)
+        batched_instances = list(islice(instance_generator, batch_size))
+        while batched_instances:
+            # Take the batched instances and create a batch from it.
+            # The batch is a tuple ((inputs), targets), where (inputs)
+            # can be (inputs0, inputs1, etc...). each of "inputs*" and
+            # "targets" are numpy arrays.
+            flattened = ([ins[0] for ins in batched_instances],
+                         [ins[1] for ins in batched_instances])
+            flattened_inputs, flattened_targets = flattened
+            batch_inputs = tuple(map(np.array, tuple(zip(*flattened_inputs))))
+            batch_targets = tuple(map(np.array, tuple(zip(*flattened_targets))))
+            yield batch_inputs, batch_targets
+            batched_instances = list(islice(instance_generator, batch_size))
 
     def get_train_data_from_file(self, filenames, min_count=1,
                                  max_instances=None,
@@ -140,19 +186,6 @@ class DataManager():
                 # Now, we want to take the instance and convert it into
                 # NumPy arrays suitable for training.
                 inputs, labels = indexed_instance.as_training_data()
-                # Handle datasets with multiple inputs, where we are returned
-                # a tuple of inputs.
-                if isinstance(inputs[0], tuple):
-                    inputs = [np.asarray(x) for x in zip(*inputs)]
-                else:
-                    inputs = np.asarray(inputs)
-
-                # Handle datasets with multiple labels, where we are returned
-                # a tuple of labels.
-                if isinstance(labels[0], tuple):
-                    labels = [np.asarray(x) for x in zip(*labels)]
-                else:
-                    labels = np.asarray(labels)
                 yield inputs, labels
         return _train_data_generator()
 
@@ -259,19 +292,6 @@ class DataManager():
                 # NumPy arrays suitable for validation.
                 inputs, labels = indexed_val_instance.as_training_data()
 
-                # Handle datasets with multiple inputs, where we are returned
-                # a tuple of inputs.
-                if isinstance(inputs[0], tuple):
-                    inputs = [np.asarray(x) for x in zip(*inputs)]
-                else:
-                    inputs = np.asarray(inputs)
-
-                # Handle datasets with multiple labels, where we are returned
-                # a tuple of labels.
-                if isinstance(labels[0], tuple):
-                    labels = [np.asarray(x) for x in zip(*labels)]
-                else:
-                    labels = np.asarray(labels)
                 yield inputs, labels
         return _validation_data_generator()
 
@@ -377,11 +397,5 @@ class DataManager():
                 # NumPy arrays suitable for validation.
                 inputs = indexed_test_instance.as_testing_data()
 
-                # Handle datasets with multiple inputs, where we are returned
-                # a tuple of inputs.
-                if isinstance(inputs[0], tuple):
-                    inputs = [np.asarray(x) for x in zip(*inputs)]
-                else:
-                    inputs = np.asarray(inputs)
                 yield inputs
         return _test_data_generator()

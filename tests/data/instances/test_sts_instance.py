@@ -125,7 +125,7 @@ class TestIndexedSTSInstance(DuplicateTestCase):
     def test_as_training_data_produces_correct_numpy_arrays(self):
         self.instance.pad({'num_sentence_words': 3})
         inputs, label = self.instance.as_training_data()
-        assert_allclose(label, np.asarray([0, 1]))
+        assert_allclose(label[0], np.asarray([0, 1]))
         assert_allclose(inputs[0], np.asarray([1, 2, 3]))
         assert_allclose(inputs[1], np.asarray([1, 8, 2]))
 
@@ -138,6 +138,7 @@ class TestIndexedSTSInstance(DuplicateTestCase):
 
     def test_as_testing_data_produces_correct_numpy_arrays(self):
         self.instance.pad({'num_sentence_words': 4})
-        inputs = self.instance.as_testing_data()
+        inputs, labels = self.instance.as_testing_data()
         assert_allclose(inputs[0], np.asarray([1, 2, 3, 5]))
         assert_allclose(inputs[1], np.asarray([1, 8, 2, 3]))
+        assert len(labels) == 0

@@ -185,20 +185,21 @@ class TestIndexedDataset(DuplicateTestCase):
         label = labels[0]
         assert_allclose(first_sentence, np.array([1, 2, 3, 0]))
         assert_allclose(second_sentence, np.array([2, 3, 0, 0]))
-        assert_allclose(label, np.array([0, 1]))
+        assert_allclose(label[0], np.array([0, 1]))
 
         first_sentence, second_sentence = inputs[1]
         label = labels[1]
         assert_allclose(first_sentence, np.array([3, 1, 0, 0]))
         assert_allclose(second_sentence, np.array([3, 1, 3, 2]))
-        assert_allclose(label, np.array([1, 0]))
+        assert_allclose(label[0], np.array([1, 0]))
 
     def test_as_testing_data(self):
         instances = [IndexedSTSInstance([1, 2, 3], [2, 3], None),
                      IndexedSTSInstance([3, 1], [3, 1, 3, 2], None)]
         indexed_dataset = IndexedDataset(instances)
         indexed_dataset.pad_instances(indexed_dataset.max_lengths())
-        inputs = indexed_dataset.as_testing_data()
+        inputs, labels = indexed_dataset.as_testing_data()
+        assert len(labels) == 0
 
         first_sentence, second_sentence = inputs[0]
         assert_allclose(first_sentence, np.array([1, 2, 3, 0]))

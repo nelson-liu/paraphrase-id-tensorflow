@@ -267,6 +267,6 @@ class IndexedDataset(Dataset):
         inputs = []
         instances = self.instances
         for instance in instances:
-            instance_inputs = instance.as_testing_data()
+            instance_inputs, _ = instance.as_testing_data()
             inputs.append(instance_inputs)
-        return inputs
+        return inputs, []
