@@ -90,3 +90,5 @@ ENV/
 
 # exclude data
 /data/
+/models/
+/logs/
