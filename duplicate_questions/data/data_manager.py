@@ -1,6 +1,6 @@
 import logging
 import numpy as np
-from itertools import cycle, islice
+from itertools import islice
 
 from .data_indexer import DataIndexer
 from .dataset import TextDataset
@@ -33,8 +33,9 @@ class DataManager():
         Parameters
         ----------
         instance_generator: numpy array generator
-            The instance_generator should generate individual training
-            instances as numpy arrays. The expected format is:
+            The instance_generator should be an infinite generator that outputs
+            individual training instances (as numpy arrays in this codebase,
+            but any iterable works). The expected format is:
             ((input0, input1,...), (target0, target1, ...))
 
         batch_size: int, default=32
@@ -50,8 +51,6 @@ class DataManager():
             should be the same as the batch size.
         """
 
-        # Make the instance_generator infinite (cycle on itself)
-        instance_generator = cycle(instance_generator)
         # batched_instances is a list of batch_size instances, where each
         # instance is a tuple ((inputs), targets)
         batched_instances = list(islice(instance_generator, batch_size))
@@ -190,14 +189,15 @@ class DataManager():
         # instead of doing the standard python generator lazy-ish evaluation.
         # This is necessary to set the class variables ASAP.
         def _train_data_generator():
-            for indexed_instance in indexed_training_dataset.instances:
-                # For each instance, we want to pad or truncate if applicable
-                if pad:
-                    indexed_instance.pad(max_lengths_to_use)
-                # Now, we want to take the instance and convert it into
-                # NumPy arrays suitable for training.
-                inputs, labels = indexed_instance.as_training_data()
-                yield inputs, labels
+            while 1:
+                for indexed_instance in indexed_training_dataset.instances:
+                    # For each instance, we want to pad or truncate if applicable
+                    if pad:
+                        indexed_instance.pad(max_lengths_to_use)
+                    # Now, we want to take the instance and convert it into
+                    # NumPy arrays suitable for training.
+                    inputs, labels = indexed_instance.as_training_data()
+                    yield inputs, labels
         return _train_data_generator(), training_dataset_size
 
     def get_validation_data_from_file(self, filenames, max_instances=None,
@@ -306,15 +306,16 @@ class DataManager():
         # instead of doing the standard python generator lazy-ish evaluation.
         # This is necessary to set the class variables ASAP.
         def _validation_data_generator():
-            for indexed_val_instance in indexed_validation_dataset.instances:
-                # For each instance, we want to pad or truncate if applicable
-                if pad:
-                    indexed_val_instance.pad(max_lengths_to_use)
-                # Now, we want to take the instance and convert it into
-                # NumPy arrays suitable for validation.
-                inputs, labels = indexed_val_instance.as_training_data()
+            while 1:
+                for indexed_val_instance in indexed_validation_dataset.instances:
+                    # For each instance, we want to pad or truncate if applicable
+                    if pad:
+                        indexed_val_instance.pad(max_lengths_to_use)
+                    # Now, we want to take the instance and convert it into
+                    # NumPy arrays suitable for validation.
+                    inputs, labels = indexed_val_instance.as_training_data()
 
-                yield inputs, labels
+                    yield inputs, labels
         return _validation_data_generator(), validation_dataset_size
 
     def get_test_data_from_file(self, filenames, max_instances=None,
@@ -422,13 +423,14 @@ class DataManager():
         # instead of doing the standard python generator lazy-ish evaluation.
         # This is necessary to set the class variables ASAP.
         def _test_data_generator():
-            for indexed_test_instance in indexed_test_dataset.instances:
-                # For each instance, we want to pad or truncate if applicable
-                if pad:
-                    indexed_test_instance.pad(max_lengths_to_use)
-                # Now, we want to take the instance and convert it into
-                # NumPy arrays suitable for validation.
-                inputs = indexed_test_instance.as_testing_data()
+            while 1:
+                for indexed_test_instance in indexed_test_dataset.instances:
+                    # For each instance, we want to pad or truncate if applicable
+                    if pad:
+                        indexed_test_instance.pad(max_lengths_to_use)
+                    # Now, we want to take the instance and convert it into
+                    # NumPy arrays suitable for validation.
+                    inputs = indexed_test_instance.as_testing_data()
 
-                yield inputs
+                    yield inputs
         return _test_data_generator(), test_dataset_size
