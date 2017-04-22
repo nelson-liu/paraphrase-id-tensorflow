@@ -4,6 +4,7 @@ import codecs
 import logging
 import os
 import shutil
+import tensorflow as tf
 
 
 class DuplicateTestCase(TestCase):
@@ -20,6 +21,7 @@ class DuplicateTestCase(TestCase):
         os.makedirs(self.TEST_DIR, exist_ok=True)
 
     def tearDown(self):
+        tf.reset_default_graph()
         shutil.rmtree(self.TEST_DIR)
 
     def write_duplicate_questions_train_file(self):

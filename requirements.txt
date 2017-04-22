@@ -26,6 +26,9 @@ pytest-pythonpath
 # Code style linting
 flake8
 
+# Some things in TF are sometimes non-deterministic, so this reruns flaky tests
+flaky
+
 # coverage reports
 coverage
 codecov
