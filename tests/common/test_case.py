@@ -27,7 +27,7 @@ class DuplicateTestCase(TestCase):
     def write_duplicate_questions_train_file(self):
         with codecs.open(self.TRAIN_FILE, 'w', 'utf-8') as dupe_train_file:
             dupe_train_file.write("\"1\",\"1\",\"2\",\"question1\","
-                                  "\"question2 question3\",\"0\"\n")
+                                  "\"question2 question3pad\",\"0\"\n")
             dupe_train_file.write("\"2\",\"3\",\"4\",\"question4\","
                                   "\"question5\",\"1\"\n")
             dupe_train_file.write("\"3\",\"5\",\"6\",\"question6\","
@@ -48,7 +48,7 @@ class DuplicateTestCase(TestCase):
         with codecs.open(self.TEST_FILE, 'w', 'utf-8') as dupe_test_file:
             dupe_test_file.write("\"1\",\"question1 questionunk1 question1\","
                                  "\"questionunk2\"\n")
-            dupe_test_file.write("\"2\",\"question3\","
+            dupe_test_file.write("\"2\",\"question3pad\","
                                  "\"question4 questionunk3\"\n")
             dupe_test_file.write("\"3\",\"question5\",\"question6\"\n")
 

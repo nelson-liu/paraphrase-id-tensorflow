@@ -69,7 +69,7 @@ class DataManager():
 
     def get_train_data_from_file(self, filenames, min_count=1,
                                  max_instances=None,
-                                 max_lengths=None, pad=True):
+                                 max_lengths=None, pad=True, mode="word"):
         """
         Given a filename or list of filenames, return a generator for producing
         individual instances of data ready for use in a model read from those
@@ -114,6 +114,11 @@ class DataManager():
             max_lengths or max_lengths across the train filenames. If False,
             no padding or truncation is applied.
 
+        mode: str, optional (default="word")
+            String describing whether to return the word-level representations,
+            character-level representations, or both. One of "word",
+            "character", or "word+character"
+
         Returns
         -------
         output: returns a tuple of (instance_generator, train_size)
@@ -145,7 +150,7 @@ class DataManager():
                                               min_count=min_count)
         self.data_indexer_fitted = True
 
-        # With our fitted data indexer, we we convert the dataset
+        # With our fitted data indexer, we convert the dataset
         # from string tokens to numeric int indices.
         logger.info("Indexing dataset")
         indexed_training_dataset = training_dataset.to_indexed_dataset(
@@ -196,12 +201,12 @@ class DataManager():
                         indexed_instance.pad(max_lengths_to_use)
                     # Now, we want to take the instance and convert it into
                     # NumPy arrays suitable for training.
-                    inputs, labels = indexed_instance.as_training_data()
+                    inputs, labels = indexed_instance.as_training_data(mode=mode)
                     yield inputs, labels
         return _train_data_generator(), training_dataset_size
 
     def get_validation_data_from_file(self, filenames, max_instances=None,
-                                      max_lengths=None, pad=True):
+                                      max_lengths=None, pad=True, mode="word"):
         """
         Given a filename or list of filenames, return a generator for producing
         individual instances of data ready for use as validation data in a
@@ -241,6 +246,11 @@ class DataManager():
             If True, pads or truncates the instances to either the input
             max_lengths or max_lengths used on the train filenames. If False,
             no padding or truncation is applied.
+
+        mode: str, optional (default="word")
+            String describing whether to return the word-level representations,
+            character-level representations, or both. One of "word",
+            "character", or "word+character"
 
         Returns
         -------
@@ -313,13 +323,13 @@ class DataManager():
                         indexed_val_instance.pad(max_lengths_to_use)
                     # Now, we want to take the instance and convert it into
                     # NumPy arrays suitable for validation.
-                    inputs, labels = indexed_val_instance.as_training_data()
+                    inputs, labels = indexed_val_instance.as_training_data(mode=mode)
 
                     yield inputs, labels
         return _validation_data_generator(), validation_dataset_size
 
     def get_test_data_from_file(self, filenames, max_instances=None,
-                                max_lengths=None, pad=True):
+                                max_lengths=None, pad=True, mode="word"):
         """
         Given a filename or list of filenames, return a generator for producing
         individual instances of data ready for use as model test data.
@@ -358,6 +368,11 @@ class DataManager():
             If True, pads or truncates the instances to either the input
             max_lengths or max_lengths used on the train filenames. If False,
             no padding or truncation is applied.
+
+        mode: str, optional (default="word")
+            String describing whether to return the word-level representations,
+            character-level representations, or both. One of "word",
+            "character", or "word+character"
 
         Returns
         -------
@@ -430,7 +445,7 @@ class DataManager():
                     indexed_test_instance.pad(max_lengths_to_use)
                 # Now, we want to take the instance and convert it into
                 # NumPy arrays suitable for validation.
-                inputs = indexed_test_instance.as_testing_data()
+                inputs = indexed_test_instance.as_testing_data(mode=mode)
 
                 yield inputs
         return _test_data_generator(), test_dataset_size

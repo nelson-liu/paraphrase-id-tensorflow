@@ -6,6 +6,7 @@ from duplicate_questions.data.data_indexer import DataIndexer
 from duplicate_questions.data.dataset import Dataset
 from duplicate_questions.data.dataset import IndexedDataset
 from duplicate_questions.data.dataset import TextDataset
+from duplicate_questions.data.instances.instance_word import IndexedInstanceWord
 from duplicate_questions.data.instances.sts_instance import IndexedSTSInstance
 from duplicate_questions.data.instances.sts_instance import STSInstance
 
@@ -48,16 +49,16 @@ class TestTextDataset(DuplicateTestCase):
         dataset = TextDataset.read_from_file(self.TRAIN_FILE, STSInstance)
         assert len(dataset.instances) == 3
         instance = dataset.instances[0]
-        assert instance.first_sentence == "question1"
-        assert instance.second_sentence == "question2 question3"
+        assert instance.first_sentence_str == "question1"
+        assert instance.second_sentence_str == "question2 question3pad"
         assert instance.label == 0
         instance = dataset.instances[1]
-        assert instance.first_sentence == "question4"
-        assert instance.second_sentence == "question5"
+        assert instance.first_sentence_str == "question4"
+        assert instance.second_sentence_str == "question5"
         assert instance.label == 1
         instance = dataset.instances[2]
-        assert instance.first_sentence == "question6"
-        assert instance.second_sentence == "question7"
+        assert instance.first_sentence_str == "question6"
+        assert instance.second_sentence_str == "question7"
         assert instance.label == 0
         with self.assertRaises(ValueError):
             TextDataset.read_from_file(3, STSInstance)
@@ -72,16 +73,16 @@ class TestTextDataset(DuplicateTestCase):
         dataset = TextDataset.read_from_lines(lines, STSInstance)
         assert len(dataset.instances) == 3
         instance = dataset.instances[0]
-        assert instance.first_sentence == "question1"
-        assert instance.second_sentence == "question2"
+        assert instance.first_sentence_str == "question1"
+        assert instance.second_sentence_str == "question2"
         assert instance.label == 0
         instance = dataset.instances[1]
-        assert instance.first_sentence == "question3"
-        assert instance.second_sentence == "question4"
+        assert instance.first_sentence_str == "question3"
+        assert instance.second_sentence_str == "question4"
         assert instance.label == 1
         instance = dataset.instances[2]
-        assert instance.first_sentence == "question5"
-        assert instance.second_sentence == "question6"
+        assert instance.first_sentence_str == "question5"
+        assert instance.second_sentence_str == "question6"
         assert instance.label == 0
         with self.assertRaises(ValueError):
             TextDataset.read_from_lines("some line", STSInstance)
@@ -93,16 +94,16 @@ class TestTextDataset(DuplicateTestCase):
         dataset = TextDataset.read_from_file(self.TEST_FILE, STSInstance)
         assert len(dataset.instances) == 3
         instance = dataset.instances[0]
-        assert instance.first_sentence == "question1 questionunk1 question1"
-        assert instance.second_sentence == "questionunk2"
+        assert instance.first_sentence_str == "question1 questionunk1 question1"
+        assert instance.second_sentence_str == "questionunk2"
         assert instance.label is None
         instance = dataset.instances[1]
-        assert instance.first_sentence == "question3"
-        assert instance.second_sentence == "question4 questionunk3"
+        assert instance.first_sentence_str == "question3pad"
+        assert instance.second_sentence_str == "question4 questionunk3"
         assert instance.label is None
         instance = dataset.instances[2]
-        assert instance.first_sentence == "question5"
-        assert instance.second_sentence == "question6"
+        assert instance.first_sentence_str == "question5"
+        assert instance.second_sentence_str == "question6"
         assert instance.label is None
         with self.assertRaises(ValueError):
             TextDataset.read_from_file(3, STSInstance)
@@ -119,62 +120,85 @@ class TestTextDataset(DuplicateTestCase):
         indexed_dataset = dataset.to_indexed_dataset(data_indexer)
 
         indexed_instance = indexed_dataset.instances[0]
-        assert indexed_instance.first_sentence_indices == [testing1_index,
-                                                           test1_index]
-        assert indexed_instance.first_sentence_unpadded_len == 2
-        assert indexed_instance.second_sentence_indices == [test1_index]
-        assert indexed_instance.second_sentence_unpadded_len == 1
+        first_sent_idxs, second_sent_idxs = indexed_instance.get_int_word_indices()
+        assert first_sent_idxs == [testing1_index,
+                                   test1_index]
+        assert second_sent_idxs == [test1_index]
 
         indexed_instance = indexed_dataset.instances[1]
-        assert indexed_instance.first_sentence_indices == [testing2_index]
-        assert indexed_instance.first_sentence_unpadded_len == 1
-        assert indexed_instance.second_sentence_indices == [test2_index,
-                                                            testing1_index]
-        assert indexed_instance.second_sentence_unpadded_len == 2
+        first_sent_idxs, second_sent_idxs = indexed_instance.get_int_word_indices()
+        assert first_sent_idxs == [testing2_index]
+        assert second_sent_idxs == [test2_index,
+                                    testing1_index]
 
 
 class TestIndexedDataset(DuplicateTestCase):
     @overrides
     def setUp(self):
         super(TestIndexedDataset, self).setUp()
-        self.instances = [IndexedSTSInstance([1, 2, 3], [2, 3], [0, 1]),
-                          IndexedSTSInstance([3, 1], [3, 1, 3, 2], [1, 0])]
+        self.instances = [IndexedSTSInstance([IndexedInstanceWord(1, [1, 5]),
+                                              IndexedInstanceWord(2, [2, 1]),
+                                              IndexedInstanceWord(3, [1, 4, 1])],
+                                             [IndexedInstanceWord(2, [2, 1]),
+                                              IndexedInstanceWord(3, [1, 4, 1])],
+                                             [0, 1]),
+                          IndexedSTSInstance([IndexedInstanceWord(3, [1, 4, 1]),
+                                              IndexedInstanceWord(1, [1, 5])],
+                                             [IndexedInstanceWord(3, [1, 4, 1]),
+                                              IndexedInstanceWord(1, [1, 5]),
+                                              IndexedInstanceWord(3, [1, 4, 1]),
+                                              IndexedInstanceWord(2, [2, 1])],
+                                             [1, 0])]
         self.indexed_dataset = IndexedDataset(self.instances)
 
     def test_max_lengths(self):
         max_lengths = self.indexed_dataset.max_lengths()
-        assert max_lengths == {"num_sentence_words": 4}
+        assert max_lengths == {"num_sentence_words": 4, "num_word_characters": 3}
 
     def test_pad_adds_zeroes(self):
-        self.indexed_dataset.pad_instances({"num_sentence_words": 4})
+        self.indexed_dataset.pad_instances({"num_sentence_words": 4,
+                                            "num_word_characters": 3})
         instance = self.indexed_dataset.instances[0]
-        assert instance.first_sentence_indices == [1, 2, 3, 0]
-        assert instance.first_sentence_unpadded_len == 3
-        assert instance.second_sentence_indices == [2, 3, 0, 0]
-        assert instance.second_sentence_unpadded_len == 2
+        first_sent_word_idxs, second_sent_word_idxs = instance.get_int_word_indices()
+        first_sent_char_idxs, second_sent_char_idxs = instance.get_int_char_indices()
+        assert first_sent_word_idxs == [1, 2, 3, 0]
+        assert second_sent_word_idxs == [2, 3, 0, 0]
+        assert first_sent_char_idxs == [[1, 5, 0], [2, 1, 0],
+                                        [1, 4, 1], [0, 0, 0]]
+        assert second_sent_char_idxs == [[2, 1, 0], [1, 4, 1],
+                                         [0, 0, 0], [0, 0, 0]]
         assert instance.label == [0, 1]
 
         instance = self.indexed_dataset.instances[1]
-        assert instance.first_sentence_indices == [3, 1, 0, 0]
-        assert instance.first_sentence_unpadded_len == 2
-        assert instance.second_sentence_indices == [3, 1, 3, 2]
-        assert instance.second_sentence_unpadded_len == 4
+        first_sent_word_idxs, second_sent_word_idxs = instance.get_int_word_indices()
+        first_sent_char_idxs, second_sent_char_idxs = instance.get_int_char_indices()
+        assert first_sent_word_idxs == [3, 1, 0, 0]
+        assert second_sent_word_idxs == [3, 1, 3, 2]
+        assert first_sent_char_idxs == [[1, 4, 1], [1, 5, 0],
+                                        [0, 0, 0], [0, 0, 0]]
+        assert second_sent_char_idxs == [[1, 4, 1], [1, 5, 0],
+                                         [1, 4, 1], [2, 1, 0]]
         assert instance.label == [1, 0]
 
     def test_pad_truncates(self):
-        self.indexed_dataset.pad_instances({"num_sentence_words": 2})
+        self.indexed_dataset.pad_instances({"num_sentence_words": 2,
+                                            "num_word_characters": 1})
         instance = self.indexed_dataset.instances[0]
-        assert instance.first_sentence_indices == [1, 2]
-        assert instance.first_sentence_unpadded_len == 3
-        assert instance.second_sentence_indices == [2, 3]
-        assert instance.second_sentence_unpadded_len == 2
+        first_sent_word_idxs, second_sent_word_idxs = instance.get_int_word_indices()
+        first_sent_char_idxs, second_sent_char_idxs = instance.get_int_char_indices()
+        assert first_sent_word_idxs == [1, 2]
+        assert second_sent_word_idxs == [2, 3]
+        assert first_sent_char_idxs == [[1], [2]]
+        assert second_sent_char_idxs == [[2], [1]]
         assert instance.label == [0, 1]
 
         instance = self.indexed_dataset.instances[1]
-        assert instance.first_sentence_indices == [3, 1]
-        assert instance.first_sentence_unpadded_len == 2
-        assert instance.second_sentence_indices == [3, 1]
-        assert instance.second_sentence_unpadded_len == 4
+        first_sent_word_idxs, second_sent_word_idxs = instance.get_int_word_indices()
+        first_sent_char_idxs, second_sent_char_idxs = instance.get_int_char_indices()
+        assert first_sent_word_idxs == [3, 1]
+        assert second_sent_word_idxs == [3, 1]
+        assert first_sent_char_idxs == [[1], [1]]
+        assert second_sent_char_idxs == [[1], [1]]
         assert instance.label == [1, 0]
 
     def test_as_training_data(self):
@@ -193,9 +217,58 @@ class TestIndexedDataset(DuplicateTestCase):
         assert_allclose(second_sentence, np.array([3, 1, 3, 2]))
         assert_allclose(label[0], np.array([1, 0]))
 
+        inputs, labels = self.indexed_dataset.as_training_data(mode="character")
+        first_sentence, second_sentence = inputs[0]
+        label = labels[0]
+        assert_allclose(first_sentence, np.array([[1, 5, 0], [2, 1, 0],
+                                                  [1, 4, 1], [0, 0, 0]]))
+        assert_allclose(second_sentence, np.array([[2, 1, 0], [1, 4, 1],
+                                                   [0, 0, 0], [0, 0, 0]]))
+        assert_allclose(label[0], np.array([0, 1]))
+
+        first_sentence, second_sentence = inputs[1]
+        label = labels[1]
+        assert_allclose(first_sentence, np.array([[1, 4, 1], [1, 5, 0],
+                                                  [0, 0, 0], [0, 0, 0]]))
+        assert_allclose(second_sentence, np.array([[1, 4, 1], [1, 5, 0],
+                                                   [1, 4, 1], [2, 1, 0]]))
+
+        inputs, labels = self.indexed_dataset.as_training_data(mode="word+character")
+        (first_sentence_words, first_sentence_characters,
+         second_sentence_words, second_sentence_characters) = inputs[0]
+        label = labels[0]
+        assert_allclose(first_sentence_words, np.array([1, 2, 3, 0]))
+        assert_allclose(second_sentence_words, np.array([2, 3, 0, 0]))
+        assert_allclose(first_sentence_characters, np.array([[1, 5, 0], [2, 1, 0],
+                                                             [1, 4, 1], [0, 0, 0]]))
+        assert_allclose(second_sentence_characters, np.array([[2, 1, 0], [1, 4, 1],
+                                                              [0, 0, 0], [0, 0, 0]]))
+        assert_allclose(label[0], np.array([0, 1]))
+
+        (first_sentence_words, first_sentence_characters,
+         second_sentence_words, second_sentence_characters) = inputs[1]
+        label = labels[1]
+        assert_allclose(first_sentence_words, np.array([3, 1, 0, 0]))
+        assert_allclose(second_sentence_words, np.array([3, 1, 3, 2]))
+        assert_allclose(first_sentence_characters, np.array([[1, 4, 1], [1, 5, 0],
+                                                             [0, 0, 0], [0, 0, 0]]))
+        assert_allclose(second_sentence_characters, np.array([[1, 4, 1], [1, 5, 0],
+                                                              [1, 4, 1], [2, 1, 0]]))
+
     def test_as_testing_data(self):
-        instances = [IndexedSTSInstance([1, 2, 3], [2, 3], None),
-                     IndexedSTSInstance([3, 1], [3, 1, 3, 2], None)]
+        instances = [IndexedSTSInstance([IndexedInstanceWord(1, [1, 4, 4]),
+                                         IndexedInstanceWord(2, [2, 3]),
+                                         IndexedInstanceWord(3, [5, 1])],
+                                        [IndexedInstanceWord(2, [2, 3]),
+                                         IndexedInstanceWord(3, [5, 1])],
+                                        None),
+                     IndexedSTSInstance([IndexedInstanceWord(3, [5, 1]),
+                                         IndexedInstanceWord(1, [1, 4, 4])],
+                                        [IndexedInstanceWord(3, [5, 1]),
+                                         IndexedInstanceWord(1, [1, 4, 4]),
+                                         IndexedInstanceWord(3, [5, 1]),
+                                         IndexedInstanceWord(2, [2, 3])],
+                                        None)]
         indexed_dataset = IndexedDataset(instances)
         indexed_dataset.pad_instances(indexed_dataset.max_lengths())
         inputs, labels = indexed_dataset.as_testing_data()
@@ -208,3 +281,41 @@ class TestIndexedDataset(DuplicateTestCase):
         first_sentence, second_sentence = inputs[1]
         assert_allclose(first_sentence, np.array([3, 1, 0, 0]))
         assert_allclose(second_sentence, np.array([3, 1, 3, 2]))
+
+        inputs, labels = indexed_dataset.as_testing_data(mode="character")
+        assert len(labels) == 0
+
+        first_sentence, second_sentence = inputs[0]
+        assert_allclose(first_sentence, np.array([[1, 4, 4], [2, 3, 0],
+                                                  [5, 1, 0], [0, 0, 0]]))
+        assert_allclose(second_sentence, np.array([[2, 3, 0], [5, 1, 0],
+                                                   [0, 0, 0], [0, 0, 0]]))
+
+        first_sentence, second_sentence = inputs[1]
+        assert_allclose(first_sentence, np.array([[5, 1, 0], [1, 4, 4],
+                                                  [0, 0, 0], [0, 0, 0]]))
+        assert_allclose(second_sentence, np.array([[5, 1, 0], [1, 4, 4],
+                                                   [5, 1, 0], [2, 3, 0]]))
+
+        inputs, labels = indexed_dataset.as_testing_data(mode="word+character")
+        assert len(labels) == 0
+
+        (first_sentence_words, first_sentence_characters,
+         second_sentence_words, second_sentence_characters) = inputs[0]
+        assert_allclose(first_sentence_words, np.array([1, 2, 3, 0]))
+        assert_allclose(second_sentence_words, np.array([2, 3, 0, 0]))
+        assert_allclose(first_sentence_characters, np.array([[1, 4, 4], [2, 3, 0],
+                                                             [5, 1, 0], [0, 0, 0]]))
+        assert_allclose(second_sentence_characters, np.array([[2, 3, 0], [5, 1, 0],
+                                                              [0, 0, 0], [0, 0, 0]]))
+
+        (first_sentence_words, first_sentence_characters,
+         second_sentence_words, second_sentence_characters) = inputs[1]
+        assert_allclose(first_sentence_words, np.array([3, 1, 0, 0]))
+        assert_allclose(second_sentence_words, np.array([3, 1, 3, 2]))
+        assert_allclose(first_sentence_characters, np.array([[5, 1, 0], [1, 4, 4],
+                                                             [0, 0, 0], [0, 0, 0]]))
+        assert_allclose(second_sentence_characters, np.array([[5, 1, 0], [1, 4, 4],
+                                                              [5, 1, 0], [2, 3, 0]]))
+        with self.assertRaises(ValueError):
+            indexed_dataset.as_testing_data(mode="char")

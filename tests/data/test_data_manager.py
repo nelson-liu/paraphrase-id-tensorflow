@@ -39,6 +39,73 @@ class TestDataManagerTrain(DuplicateTestCase):
         assert_allclose(inputs4, inputs1)
         assert_allclose(labels4, labels1)
 
+    def test_get_train_data_default_character(self):
+        train_gen, train_size = self.data_manager.get_train_data_from_file(
+            [self.TRAIN_FILE], mode="character")
+        assert train_size == 3
+        inputs1, labels1 = train_gen.__next__()
+        assert_allclose(inputs1[0], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 10, 0, 0, 0],
+                                              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+        assert_allclose(inputs1[1], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 11, 0, 0, 0],
+                                              [6, 9, 2, 7, 8, 3, 5, 4, 12, 19, 17, 18]]))
+        assert_allclose(labels1[0], np.array([1, 0]))
+
+        inputs2, labels2 = train_gen.__next__()
+        assert_allclose(inputs2[0], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 13, 0, 0, 0],
+                                              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+        assert_allclose(inputs2[1], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 14, 0, 0, 0],
+                                              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+        assert_allclose(labels2[0], np.array([0, 1]))
+
+        inputs3, labels3 = train_gen.__next__()
+        assert_allclose(inputs3[0], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 15, 0, 0, 0],
+                                              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+        assert_allclose(inputs3[1], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 16, 0, 0, 0],
+                                              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+        assert_allclose(labels3[0], np.array([1, 0]))
+
+        # Should cycle back to the start
+        inputs4, labels4 = train_gen.__next__()
+        assert_allclose(inputs4, inputs1)
+        assert_allclose(labels4, labels1)
+
+    def test_get_train_data_default_word_and_character(self):
+        train_gen, train_size = self.data_manager.get_train_data_from_file(
+            [self.TRAIN_FILE], mode="word+character")
+        assert train_size == 3
+        inputs1, labels1 = train_gen.__next__()
+        assert_allclose(inputs1[0], np.array([2, 0]))
+        assert_allclose(inputs1[1], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 10, 0, 0, 0],
+                                              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+        assert_allclose(inputs1[2], np.array([3, 4]))
+        assert_allclose(inputs1[3], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 11, 0, 0, 0],
+                                              [6, 9, 2, 7, 8, 3, 5, 4, 12, 19, 17, 18]]))
+        assert_allclose(labels1[0], np.array([1, 0]))
+
+        inputs2, labels2 = train_gen.__next__()
+        assert_allclose(inputs2[0], np.array([5, 0]))
+        assert_allclose(inputs2[1], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 13, 0, 0, 0],
+                                              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+        assert_allclose(inputs2[2], np.array([6, 0]))
+        assert_allclose(inputs2[3], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 14, 0, 0, 0],
+                                              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+        assert_allclose(labels2[0], np.array([0, 1]))
+
+        inputs3, labels3 = train_gen.__next__()
+        assert_allclose(inputs3[0], np.array([7, 0]))
+        assert_allclose(inputs3[1], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 15, 0, 0, 0],
+                                              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+        assert_allclose(inputs3[2], np.array([8, 0]))
+        assert_allclose(inputs3[3], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 16, 0, 0, 0],
+                                              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+        assert_allclose(labels3[0], np.array([1, 0]))
+
+        # Should cycle back to the start
+        inputs4, labels4 = train_gen.__next__()
+        for idx, val in enumerate(inputs4):
+            assert_allclose(inputs4[idx], inputs1[idx])
+        assert_allclose(labels4, labels1)
+
     def test_get_train_data_pad_with_max_lens(self):
         train_gen, train_size = self.data_manager.get_train_data_from_file(
             [self.TRAIN_FILE],
@@ -185,6 +252,73 @@ class TestDataManagerValidation(DuplicateTestCase):
         assert_allclose(inputs4, inputs1)
         assert_allclose(labels4, labels1)
 
+    def test_get_validation_data_default_character(self):
+        val_gen, val_size = self.data_manager.get_validation_data_from_file(
+            [self.VALIDATION_FILE], mode="character")
+        assert val_size == 3
+        inputs1, labels1 = val_gen.__next__()
+        assert_allclose(inputs1[0], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 10, 0, 0, 0],
+                                              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+        assert_allclose(inputs1[1], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 11, 0, 0, 0],
+                                              [6, 9, 2, 7, 8, 3, 5, 4, 1, 0, 0, 0]]))
+        assert_allclose(labels1[0], np.array([1, 0]))
+
+        inputs2, labels2 = val_gen.__next__()
+        assert_allclose(inputs2[0], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 1, 0, 0, 0],
+                                              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+        assert_allclose(inputs2[1], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 10, 1, 0, 0],
+                                              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+        assert_allclose(labels2[0], np.array([0, 1]))
+
+        inputs3, labels3 = val_gen.__next__()
+        assert_allclose(inputs3[0], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 15, 0, 0, 0],
+                                              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+        assert_allclose(inputs3[1], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 16, 0, 0, 0],
+                                              [6, 9, 2, 7, 8, 3, 5, 4, 10, 10, 0, 0]]))
+        assert_allclose(labels3[0], np.array([1, 0]))
+
+        # Should cycle back to the start
+        inputs4, labels4 = val_gen.__next__()
+        assert_allclose(inputs4, inputs1)
+        assert_allclose(labels4, labels1)
+
+    def test_get_validation_data_default_word_and_character(self):
+        val_gen, val_size = self.data_manager.get_validation_data_from_file(
+            [self.VALIDATION_FILE], mode="word+character")
+        assert val_size == 3
+        inputs1, labels1 = val_gen.__next__()
+        assert_allclose(inputs1[0], np.array([2, 0]))
+        assert_allclose(inputs1[1], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 10, 0, 0, 0],
+                                              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+        assert_allclose(inputs1[2], np.array([3, 1]))
+        assert_allclose(inputs1[3], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 11, 0, 0, 0],
+                                              [6, 9, 2, 7, 8, 3, 5, 4, 1, 0, 0, 0]]))
+        assert_allclose(labels1[0], np.array([1, 0]))
+
+        inputs2, labels2 = val_gen.__next__()
+        assert_allclose(inputs2[0], np.array([1, 0]))
+        assert_allclose(inputs2[1], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 1, 0, 0, 0],
+                                              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+        assert_allclose(inputs2[2], np.array([1, 0]))
+        assert_allclose(inputs2[3], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 10, 1, 0, 0],
+                                              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+        assert_allclose(labels2[0], np.array([0, 1]))
+
+        inputs3, labels3 = val_gen.__next__()
+        assert_allclose(inputs3[0], np.array([7, 0]))
+        assert_allclose(inputs3[1], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 15, 0, 0, 0],
+                                              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+        assert_allclose(inputs3[2], np.array([8, 1]))
+        assert_allclose(inputs3[3], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 16, 0, 0, 0],
+                                              [6, 9, 2, 7, 8, 3, 5, 4, 10, 10, 0, 0]]))
+        assert_allclose(labels3[0], np.array([1, 0]))
+
+        # Should cycle back to the start
+        inputs4, labels4 = val_gen.__next__()
+        for idx, val in enumerate(inputs4):
+            assert_allclose(inputs4[idx], inputs1[idx])
+        assert_allclose(labels4, labels1)
+
     def test_get_validation_data_pad_with_max_lens(self):
         val_gen, val_size = self.data_manager.get_validation_data_from_file(
             [self.VALIDATION_FILE],
@@ -325,6 +459,62 @@ class TestDataManagerTest(DuplicateTestCase):
         inputs, labels = test_gen[2]
         assert_allclose(inputs[0], np.array([6, 0]))
         assert_allclose(inputs[1], np.array([7, 0]))
+        assert len(labels) == 0
+
+    def test_get_test_data_default_character(self):
+        test_gen, test_size = self.data_manager.get_test_data_from_file(
+            [self.TEST_FILE], mode="character")
+        assert test_size == 3
+        inputs1, labels = test_gen.__next__()
+        assert_allclose(inputs1[0], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 10, 0, 0, 0],
+                                              [6, 9, 2, 7, 8, 3, 5, 4, 9, 4, 1, 10]]))
+        assert_allclose(inputs1[1], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 9, 4, 1, 11],
+                                              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+        assert len(labels) == 0
+
+        inputs2, labels = test_gen.__next__()
+        assert_allclose(inputs2[0], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 12, 19, 17, 18],
+                                              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+        assert_allclose(inputs2[1], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 13, 0, 0, 0],
+                                              [6, 9, 2, 7, 8, 3, 5, 4, 9, 4, 1, 12]]))
+        assert len(labels) == 0
+
+        inputs3, labels = test_gen.__next__()
+        assert_allclose(inputs3[0], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 14, 0, 0, 0],
+                                              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+        assert_allclose(inputs3[1], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 15, 0, 0, 0],
+                                              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+        assert len(labels) == 0
+
+    def test_get_test_data_default_word_and_character(self):
+        test_gen, test_size = self.data_manager.get_test_data_from_file(
+            [self.TEST_FILE], mode="word+character")
+        assert test_size == 3
+        inputs1, labels = test_gen.__next__()
+        assert_allclose(inputs1[0], np.array([2, 1]))
+        assert_allclose(inputs1[1], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 10, 0, 0, 0],
+                                              [6, 9, 2, 7, 8, 3, 5, 4, 9, 4, 1, 10]]))
+        assert_allclose(inputs1[2], np.array([1, 0]))
+        assert_allclose(inputs1[3], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 9, 4, 1, 11],
+                                              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+        assert len(labels) == 0
+
+        inputs2, labels = test_gen.__next__()
+        assert_allclose(inputs2[0], np.array([4, 0]))
+        assert_allclose(inputs2[1], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 12, 19, 17, 18],
+                                              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+        assert_allclose(inputs2[2], np.array([5, 1]))
+        assert_allclose(inputs2[3], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 13, 0, 0, 0],
+                                              [6, 9, 2, 7, 8, 3, 5, 4, 9, 4, 1, 12]]))
+        assert len(labels) == 0
+
+        inputs3, labels = test_gen.__next__()
+        assert_allclose(inputs3[0], np.array([6, 0]))
+        assert_allclose(inputs3[1], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 14, 0, 0, 0],
+                                              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
+        assert_allclose(inputs3[2], np.array([7, 0]))
+        assert_allclose(inputs3[3], np.array([[6, 9, 2, 7, 8, 3, 5, 4, 15, 0, 0, 0],
+                                              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]))
         assert len(labels) == 0
 
     def test_get_test_data_pad_with_max_lens(self):

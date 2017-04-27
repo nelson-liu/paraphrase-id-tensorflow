@@ -1,8 +1,11 @@
 import csv
+from copy import deepcopy
+import itertools
 import numpy as np
 from overrides import overrides
 
 from .instance import TextInstance, IndexedInstance
+from .instance_word import IndexedInstanceWord
 
 
 class STSInstance(TextInstance):
@@ -32,25 +35,55 @@ class STSInstance(TextInstance):
 
     def __init__(self, first_sentence, second_sentence, label):
         super(STSInstance, self).__init__(label)
-        self.first_sentence = first_sentence
-        self.second_sentence = second_sentence
+        self.first_sentence_str = first_sentence
+        self.second_sentence_str = second_sentence
+        # Tokenize the string representations of the first
+        # and second sentence into words and characters
+
+        first_sentence_words = self.tokenizer.tokenize(first_sentence)
+        self.first_sentence_tokenized = {
+            "words": first_sentence_words,
+            "characters": list(map(list, first_sentence_words))}
+        second_sentence_words = self.tokenizer.tokenize(second_sentence)
+        self.second_sentence_tokenized = {
+            "words": second_sentence_words,
+            "characters": list(map(list, second_sentence_words))}
 
     def __str__(self):
-        return ('STSInstance(' + self.first_sentence + ', ' +
-                self.second_sentence + ', ' + str(self.label) + ')')
+        return ('STSInstance(' + self.first_sentence_str + ', ' +
+                self.second_sentence_str + ', ' + str(self.label) + ')')
 
     @overrides
     def words(self):
-        words = self._words_from_text(self.first_sentence)
-        second_sentence_words = self._words_from_text(self.second_sentence)
-        words.extend(second_sentence_words)
+        words = deepcopy(self.first_sentence_tokenized)
+        second_sentence_words = deepcopy(self.second_sentence_tokenized)
+
+        # Flatten the list of lists of characters
+        words["characters"] = list(itertools.chain.from_iterable(words["characters"]))
+        second_sentence_words["characters"] = list(itertools.chain.from_iterable(
+            second_sentence_words["characters"]))
+        for namespace in words:
+            words[namespace].extend(second_sentence_words[namespace])
         return words
 
     @overrides
     def to_indexed_instance(self, data_indexer):
-        first_sentence = self._index_text(self.first_sentence, data_indexer)
-        second_sentence = self._index_text(self.second_sentence, data_indexer)
-        return IndexedSTSInstance(first_sentence, second_sentence,
+        indexed_first_words, indexed_first_chars = self._index_text(
+            self.first_sentence_tokenized,
+            data_indexer)
+        indexed_second_words, indexed_second_chars = self._index_text(
+            self.second_sentence_tokenized,
+            data_indexer)
+        # These are lists of IndexedInstanceWords
+        indexed_first_sentence = [IndexedInstanceWord(word, word_characters) for
+                                  word, word_characters in zip(indexed_first_words,
+                                                               indexed_first_chars)]
+        indexed_second_sentence = [IndexedInstanceWord(word, word_characters) for
+                                   word, word_characters in zip(indexed_second_words,
+                                                                indexed_second_chars)]
+
+        return IndexedSTSInstance(indexed_first_sentence,
+                                  indexed_second_sentence,
                                   self.label_mapping[self.label])
 
     @classmethod
@@ -95,13 +128,13 @@ class IndexedSTSInstance(IndexedInstance):
 
     Parameters
     ----------
-    first_sentence_indices: List of int
-        A list of integers representing the word indices of the
-        first sentence.
+    first_sentence_indices: List of IndexedInstanceWord
+        A list of IndexedInstanceWord representing the word and character
+        indices of the first sentence.
 
-    second_sentence_indices: List of int
-        A list of integers representing the word indices of the
-        second sentence.
+    second_sentence_indices: List of IndexedInstanceWord
+        A list of IndexedInstanceWord representing the word and character
+        indices of the second sentence.
 
     label: List of int
         A list of integers representing the label. If the two sentences
@@ -111,30 +144,26 @@ class IndexedSTSInstance(IndexedInstance):
     def __init__(self, first_sentence_indices, second_sentence_indices, label):
         super(IndexedSTSInstance, self).__init__(label)
         self.first_sentence_indices = first_sentence_indices
-        self.first_sentence_unpadded_len = len(self.first_sentence_indices)
         self.second_sentence_indices = second_sentence_indices
-        self.second_sentence_unpadded_len = len(self.second_sentence_indices)
+
+    def get_int_word_indices(self):
+        first_sentence_word_indices = [idxd_word.word_index for idxd_word in
+                                       self.first_sentence_indices]
+        second_sentence_word_indices = [idxd_word.word_index for idxd_word in
+                                        self.second_sentence_indices]
+        return (first_sentence_word_indices, second_sentence_word_indices)
+
+    def get_int_char_indices(self):
+        first_sentence_char_indices = [idxd_word.char_indices for idxd_word in
+                                       self.first_sentence_indices]
+        second_sentence_char_indices = [idxd_word.char_indices for idxd_word in
+                                        self.second_sentence_indices]
+        return (first_sentence_char_indices, second_sentence_char_indices)
 
     @classmethod
     @overrides
     def empty_instance(cls):
         return IndexedSTSInstance([], [], label=None)
-
-    def get_unpadded_lengths(self):
-        """
-        Returns the lengths of the two sentences before
-        any padding was applied.
-
-        Returns
-        -------
-        lengths: List of int
-            The first element of the list is the
-            length of the first sentence before any padding,
-            and the second element of the list is the length
-            of the second sentence before any padding.
-        """
-        return [self.first_sentence_unpadded_len,
-                self.second_sentence_unpadded_len]
 
     @overrides
     def get_lengths(self):
@@ -145,15 +174,33 @@ class IndexedSTSInstance(IndexedInstance):
         Returns
         -------
         lengths_dict: Dictionary of string to int
-            The "num_sentence_words" key is hard-coded
-            to have the length to pad to. This is kind
+            The "num_sentence_words" and "num_word_characters" keys are
+            hard-coded to have the length to pad to. This is kind
             of a messy API, but I've not yet thought of
             a cleaner way to do it.
         """
-        first_sentence_len = len(self.first_sentence_indices)
-        second_sentence_len = len(self.second_sentence_indices)
-        lengths = {"num_sentence_words": max(first_sentence_len,
-                                             second_sentence_len)}
+        # Length of longest sentence, as measured in # words.
+        first_sentence_word_len = len(self.first_sentence_indices)
+        second_sentence_word_len = len(self.second_sentence_indices)
+        # Length of longest word, as measured in # characters
+        # The length of the list can be 0, so we have to take some
+        # precautions with the max.
+        first_sentence_chars = [len(idxd_word.char_indices) for
+                                idxd_word in self.first_sentence_indices]
+        if first_sentence_chars:
+            first_sentence_chars_len = max(first_sentence_chars)
+        else:
+            first_sentence_chars_len = 0
+        second_sentence_chars = [len(idxd_word.char_indices) for
+                                 idxd_word in self.second_sentence_indices]
+        if second_sentence_chars:
+            second_sentence_chars_len = max(second_sentence_chars)
+        else:
+            second_sentence_chars_len = 0
+        lengths = {"num_sentence_words": max(first_sentence_word_len,
+                                             second_sentence_word_len),
+                   "num_word_characters": max(first_sentence_chars_len,
+                                              second_sentence_chars_len)}
         return lengths
 
     @overrides
@@ -170,16 +217,40 @@ class IndexedSTSInstance(IndexedInstance):
             "num_sentence_words" key.
         """
         num_sentence_words = max_lengths["num_sentence_words"]
-        self.first_sentence_indices = self.pad_word_sequence(
-            self.first_sentence_indices, num_sentence_words)
-        self.second_sentence_indices = self.pad_word_sequence(
-            self.second_sentence_indices, num_sentence_words)
+        num_word_characters = max_lengths["num_word_characters"]
+        # Pad at the word-level, adding empty IndexedInstanceWords
+        self.first_sentence_indices = self.pad_sequence_to_length(
+            self.first_sentence_indices,
+            num_sentence_words,
+            default_value=IndexedInstanceWord.padding_instance_word)
+        self.second_sentence_indices = self.pad_sequence_to_length(
+            self.second_sentence_indices,
+            num_sentence_words,
+            default_value=IndexedInstanceWord.padding_instance_word)
+
+        # Pad at the character-level, adding 0 padding to character list
+        for indexed_instance_word in self.first_sentence_indices:
+            indexed_instance_word.char_indices = self.pad_sequence_to_length(
+                indexed_instance_word.char_indices,
+                num_word_characters)
+
+        for indexed_instance_word in self.second_sentence_indices:
+            indexed_instance_word.char_indices = self.pad_sequence_to_length(
+                indexed_instance_word.char_indices,
+                num_word_characters)
 
     @overrides
-    def as_training_data(self):
+    def as_training_data(self, mode="word"):
         """
         Transforms the instance into a collection of NumPy
         arrays suitable for use as training data in the model.
+
+        Parameters
+        ----------
+        mode: str, optional (default="word")
+            String describing whether to return the word-level representations,
+            character-level representations, or both. One of "word",
+            "character", or "word+character"
 
         Returns
         -------
@@ -193,15 +264,36 @@ class IndexedSTSInstance(IndexedInstance):
         if self.label is None:
             raise ValueError("self.label is None so this is a test example. "
                              "You cannot call as_training_data on it.")
-        first_sentence_array = np.asarray(self.first_sentence_indices,
-                                          dtype='int32')
-        second_sentence_array = np.asarray(self.second_sentence_indices,
-                                           dtype='int32')
-        return ((first_sentence_array, second_sentence_array),
-                (np.asarray(self.label),))
+        if mode not in set(["word", "character", "word+character"]):
+            raise ValueError("Input mode was {}, expected \"word\","
+                             "\"character\", or \"word+character\"")
+        if mode == "word" or mode == "word+character":
+            first_sentence_word_array = np.asarray([word.word_index for word
+                                                    in self.first_sentence_indices],
+                                                   dtype="int32")
+            second_sentence_word_array = np.asarray([word.word_index for word
+                                                     in self.second_sentence_indices],
+                                                    dtype="int32")
+        if mode == "character" or mode == "word+character":
+            first_sentence_char_matrix = np.asarray([word.char_indices for word
+                                                     in self.first_sentence_indices],
+                                                    dtype="int32")
+            second_sentence_char_matrix = np.asarray([word.char_indices for word
+                                                      in self.second_sentence_indices],
+                                                     dtype="int32")
+        if mode == "character":
+            return ((first_sentence_char_matrix, second_sentence_char_matrix),
+                    (np.asarray(self.label),))
+        if mode == "word":
+            return ((first_sentence_word_array, second_sentence_word_array),
+                    (np.asarray(self.label),))
+        if mode == "word+character":
+            return ((first_sentence_word_array, first_sentence_char_matrix,
+                     second_sentence_word_array, second_sentence_char_matrix),
+                    (np.asarray(self.label),))
 
     @overrides
-    def as_testing_data(self):
+    def as_testing_data(self, mode="word"):
         """Transforms the instance into a collection of NumPy
         arrays suitable for use as testing data in the model.
 
@@ -211,9 +303,36 @@ class IndexedSTSInstance(IndexedInstance):
             The first element of this tuple has the NumPy array
             of the first sentence, and the second element has the
             NumPy array of the second sentence.
+
+        mode: str, optional (default="word")
+            String describing whether to return the word-level representations,
+            character-level representations, or both. One of "word",
+            "character", or "word+character"
         """
-        first_sentence_array = np.asarray(self.first_sentence_indices,
-                                          dtype='int32')
-        second_sentence_array = np.asarray(self.second_sentence_indices,
-                                           dtype='int32')
-        return ((first_sentence_array, second_sentence_array), ())
+        if mode not in set(["word", "character", "word+character"]):
+            raise ValueError("Input mode was {}, expected \"word\","
+                             "\"character\", or \"word+character\"")
+        if mode == "word" or mode == "word+character":
+            first_sentence_word_array = np.asarray([word.word_index for word
+                                                    in self.first_sentence_indices],
+                                                   dtype="int32")
+            second_sentence_word_array = np.asarray([word.word_index for word
+                                                     in self.second_sentence_indices],
+                                                    dtype="int32")
+        if mode == "character" or mode == "word+character":
+            first_sentence_char_matrix = np.asarray([word.char_indices for word
+                                                     in self.first_sentence_indices],
+                                                    dtype="int32")
+            second_sentence_char_matrix = np.asarray([word.char_indices for word
+                                                      in self.second_sentence_indices],
+                                                     dtype="int32")
+        if mode == "character":
+            return ((first_sentence_char_matrix, second_sentence_char_matrix),
+                    ())
+        if mode == "word":
+            return ((first_sentence_word_array, second_sentence_word_array),
+                    ())
+        if mode == "word+character":
+            return ((first_sentence_word_array, first_sentence_char_matrix,
+                     second_sentence_word_array, second_sentence_char_matrix),
+                    ())

@@ -100,7 +100,8 @@ class TextInstance(Instance):
 
     def words(self):
         """
-        Returns a list of all of the words in this instance.
+        Returns a list of all of the words in this instance, contained in a
+        namespace dictionary.
 
         This is mainly used for computing word counts when fitting a word
         vocabulary on a dataset. The namespace dictionary allows you to have
@@ -114,8 +115,12 @@ class TextInstance(Instance):
 
         Returns
         -------
-        index_words: List[str]
-            The list of words in this Instance.
+        namespace : Dictionary of {str: List[str]}
+            The ``str`` key refers to vocabularies, and the ``List[str]``
+            should contain the tokens in that vocabulary. For example, you
+            should use the key ``words`` to represent word tokens, and the
+            corresponding value in the dictionary would be a list of all the
+            words in the instance.
         """
         raise NotImplementedError
 
@@ -286,7 +291,8 @@ class IndexedInstance(Instance):
         lose some of the details that are provided at the end. If you want to
         truncate from the other direction, you can.
         """
-        default_pad_value = 0
+        def default_pad_value():
+            return 0
 
         padded_word_sequence = IndexedInstance.pad_sequence_to_length(
             word_sequence, sequence_length,
@@ -296,10 +302,11 @@ class IndexedInstance(Instance):
     @staticmethod
     def pad_sequence_to_length(sequence,
                                desired_length,
-                               default_value=0,
+                               default_value=lambda: 0,
                                truncate_from_right=True):
         """
         Take a list of indices and pads them to the desired length.
+
         Parameters
         ----------
         word_sequence : List of int
@@ -309,7 +316,7 @@ class IndexedInstance(Instance):
             Maximum length of each sequence. Longer sequences
             are truncated to this length, and shorter ones are padded to it.
 
-        default_value: int, default=0
+        default_value: int, default=lambda: 0
             Callable that outputs a default value (of any type) to use as
             padding values.
 
@@ -337,8 +344,8 @@ class IndexedInstance(Instance):
         if len(truncated) < desired_length:
             # If the length of the truncated sequence is less than the desired
             # length, we need to pad.
-            padding_sequence = [default_value] * (desired_length -
-                                                  len(truncated))
+            padding_sequence = [default_value()] * (desired_length -
+                                                    len(truncated))
             if truncate_from_right:
                 # When we truncate from the right, we add zeroes to the end.
                 truncated.extend(padding_sequence)

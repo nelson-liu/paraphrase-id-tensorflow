@@ -2,7 +2,7 @@ import codecs
 import itertools
 import logging
 
-import tqdm
+from tqdm import tqdm
 
 from .instances.instance import Instance
 
@@ -104,7 +104,7 @@ class TextDataset(Dataset):
             The DataIndexer to use in converting words to indices.
         """
         indexed_instances = [instance.to_indexed_instance(data_indexer) for
-                             instance in tqdm.tqdm(self.instances)]
+                             instance in tqdm(self.instances)]
         return IndexedDataset(indexed_instances)
 
     @staticmethod
@@ -138,9 +138,10 @@ class TextDataset(Dataset):
             raise ValueError("Expected filename to be a List of strings "
                              "but was {} of type "
                              "{}".format(filenames, type(filenames)))
+        logger.info("Reading files {} to a list of lines.".format(filenames))
         lines = [x.strip() for filename in filenames
-                 for x in tqdm.tqdm(codecs.open(filename,
-                                                "r", "utf-8").readlines())]
+                 for x in tqdm(codecs.open(filename,
+                                           "r", "utf-8").readlines())]
         return TextDataset.read_from_lines(lines, instance_class)
 
     @staticmethod
@@ -171,7 +172,9 @@ class TextDataset(Dataset):
             raise ValueError("Expected lines to be a list of strings, "
                              "but the first element of the list was {} "
                              "of type {}".format(lines[0], type(lines[0])))
-        instances = [instance_class.read_from_line(line) for line in lines]
+        logger.info("Creating list of {} instances from "
+                    "list of lines.".format(instance_class))
+        instances = [instance_class.read_from_line(line) for line in tqdm(lines)]
         labels = [(x.label, x) for x in instances]
         labels.sort(key=lambda x: str(x[0]))
         label_counts = [(label, len([x for x in group]))
@@ -192,7 +195,6 @@ class IndexedDataset(Dataset):
     IndexedInstances have text sequences replaced with lists of word indices,
     and are thus able to be padded to consistent lengths and converted to
     training inputs.
-
     """
     def __init__(self, instances):
         super(IndexedDataset, self).__init__(instances)
@@ -238,35 +240,49 @@ class IndexedDataset(Dataset):
 
         logger.info("Now actually padding instances to length: %s",
                     str(lengths_to_use))
-        for instance in tqdm.tqdm(self.instances):
+        for instance in tqdm(self.instances):
             instance.pad(lengths_to_use)
 
-    def as_training_data(self):
+    def as_training_data(self, mode="word"):
         """
         Takes each IndexedInstance and converts it into (inputs, labels),
         according to the Instance's as_training_data() method. Note that
         you might need to call numpy.asarray() on the results of this; we
         don't do that for you, because the inputs might be complicated.
+
+        Parameters
+        ----------
+        mode: str, optional (default="word")
+            String describing whether to return the word-level representations,
+            character-level representations, or both. One of "word",
+            "character", or "word+character"
         """
         inputs = []
         labels = []
         instances = self.instances
         for instance in instances:
-            instance_inputs, label = instance.as_training_data()
+            instance_inputs, label = instance.as_training_data(mode=mode)
             inputs.append(instance_inputs)
             labels.append(label)
         return inputs, labels
 
-    def as_testing_data(self):
+    def as_testing_data(self, mode="word"):
         """
         Takes each IndexedInstance and converts it into inputs,
         according to the Instance's as_testing_data() method. Note that
         you might need to call numpy.asarray() on the results of this; we
         don't do that for you, because the inputs might be complicated.
+
+        Parameters
+        ----------
+        mode: str, optional (default="word")
+            String describing whether to return the word-level representations,
+            character-level representations, or both. One of "word",
+            "character", or "word+character"
         """
         inputs = []
         instances = self.instances
         for instance in instances:
-            instance_inputs, _ = instance.as_testing_data()
+            instance_inputs, _ = instance.as_testing_data(mode=mode)
             inputs.append(instance_inputs)
         return inputs, []

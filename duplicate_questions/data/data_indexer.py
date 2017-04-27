@@ -1,4 +1,4 @@
-from collections import Counter
+from collections import Counter, defaultdict
 import logging
 
 from .dataset import Dataset
@@ -23,15 +23,22 @@ class DataIndexer:
         # setting where not all input is lowercase.
         self._padding_token = "@@PADDING@@"
         self._oov_token = "@@UNKOWN@@"
-        self.word_indices = {self._padding_token: 0, self._oov_token: 1}
+        self.word_indices = defaultdict(self._default_namespace_word_indices_dict)
         self.is_fit = False
-        self.reverse_word_indices = {0: self._padding_token,
-                                     1: self._oov_token}
+        self.reverse_word_indices = defaultdict(
+            self._default_namespace_reverse_word_indices_dict)
+
+    def _default_namespace_word_indices_dict(self):
+        return {self._padding_token: 0, self._oov_token: 1}
+
+    def _default_namespace_reverse_word_indices_dict(self):
+        return {0: self._padding_token, 1: self._oov_token}
 
     def fit_word_dictionary(self, dataset, min_count=1):
         """
-        Given a Dataset, this method decides which words are given an index,
-        and which ones are mapped to an OOV token (in this case "@@UNKNOWN@@").
+        Given a Dataset, this method decides which words (which could be words
+        or characters) are given an index, and which ones are mapped to an OOV
+        token (in this case "@@UNKNOWN@@").
 
         This method must be called before any dataset is indexed with this
         DataIndexer. If you don't first fit the word dictionary, you'll
@@ -58,22 +65,26 @@ class DataIndexer:
                              "{}".format(min_count, type(min_count)))
 
         logger.info("Fitting word dictionary with min count of %d", min_count)
-        word_counts = Counter()
+        namespace_word_counts = defaultdict(Counter)
         for instance in tqdm.tqdm(dataset.instances):
-            instance_words = instance.words()
-            for word in instance_words:
-                word_counts[word] += 1
+            # dictionary with keys as namespace names, and values asarray
+            # the words for that namespace.
+            namespace_dict = instance.words()
+            for namespace in namespace_dict:
+                for word in namespace_dict[namespace]:
+                    namespace_word_counts[namespace][word] += 1
         # Index the dataset, sorted by order of decreasing frequency, and then
         # alphabetically for ties.
-        sorted_word_counts = sorted(word_counts.items(),
-                                    key=lambda pair: (-pair[1],
-                                                      pair[0]))
-        for word, count in sorted_word_counts:
-            if count >= min_count:
-                self.add_word_to_index(word)
+        for namespace, word_counts in namespace_word_counts.items():
+            sorted_word_counts = sorted(word_counts.items(),
+                                        key=lambda pair: (-pair[1],
+                                                          pair[0]))
+            for word, count in sorted_word_counts:
+                if count >= min_count:
+                    self.add_word_to_index(word, namespace)
         self.is_fit = True
 
-    def add_word_to_index(self, word):
+    def add_word_to_index(self, word, namespace="words"):
         """
         Adds `word` to the index, if it is not already present. Either way, we
         return the index of the word.
@@ -83,35 +94,45 @@ class DataIndexer:
         word: str
             A string to be added to the indexer.
 
+        namespace: str
+            The string namespace to index the word under.
+
         Returns
         -------
         index: int
-            The index of the input word.
+            The index of the input word in the namespace.
         """
         if not isinstance(word, str):
             raise ValueError("Expected word to be type "
                              "str, found {} of type "
                              "{}".format(word, type(word)))
-        if word not in self.word_indices:
-            index = len(self.word_indices)
-            self.word_indices[word] = index
-            self.reverse_word_indices[index] = word
+        if word not in self.word_indices[namespace]:
+            index = len(self.word_indices[namespace])
+            self.word_indices[namespace][word] = index
+            self.reverse_word_indices[namespace][index] = word
             return index
         else:
-            return self.word_indices[word]
+            return self.word_indices[namespace][word]
 
-    def words_in_index(self):
+    def words_in_index(self, namespace="words"):
         """
-        Returns a list of the words in the index.
+        Returns a list of the words in the index for a
+        given namespace.
+
+        Parameters
+        ----------
+        namespace: str, optional (default="words")
+            The string namespace to return the list of words
+            in.
 
         Returns
         -------
         word_list: List of str
             A list of the words added to this DataIndexer.
         """
-        return self.word_indices.keys()
+        return self.word_indices[namespace].keys()
 
-    def get_word_index(self, word):
+    def get_word_index(self, word, namespace="words"):
         """
         Get the index of a word.
 
@@ -119,6 +140,10 @@ class DataIndexer:
         ----------
         word: str
             A string to return the index of.
+
+        namespace: str, optional (default="words")
+            The string namespace to return the list of words
+            in.
 
         Returns
         -------
@@ -130,19 +155,24 @@ class DataIndexer:
             raise ValueError("Expected word to be type "
                              "str, found {} of type "
                              "{}".format(word, type(word)))
-        if word in self.word_indices:
-            return self.word_indices[word]
+        if word in self.word_indices[namespace]:
+            return self.word_indices[namespace][word]
         else:
-            return self.word_indices[self._oov_token]
+            return self.word_indices[namespace][self._oov_token]
 
-    def get_word_from_index(self, index):
+    def get_word_from_index(self, index, namespace="words"):
         """
-        Get the word corresponding to an input index.
+        Get the word corresponding to an input index, for a
+        given namespace.
 
         Parameters
         ----------
         index: int
             The int index to retrieve the word from.
+
+        namespace: str, optional (default="words")
+            The string namespace to return the list of words
+            in.
 
         Returns
         -------
@@ -153,15 +183,21 @@ class DataIndexer:
             raise ValueError("Expected index to be type "
                              "int, found {} of type "
                              "{}".format(index, type(index)))
-        return self.reverse_word_indices[index]
+        return self.reverse_word_indices[namespace][index]
 
-    def get_vocab_size(self):
+    def get_vocab_size(self, namespace="words"):
         """
-        Get the number of words in this DataIndexer.
+        Get the number of words in a namespace.
+
+        Parameters
+        ----------
+        namespace: str, optional (default="words")
+            The string namespace to return the list of words
+            in.
 
         Returns
         -------
         vocab_size: int
             The number of words added to this DataIndexer.
         """
-        return len(self.word_indices)
+        return len(self.word_indices[namespace])
