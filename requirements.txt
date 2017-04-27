@@ -16,6 +16,9 @@ nltk
 # Argument parsing / config
 argparse
 
+# Mainly used for outputting proper csvs easily
+pandas
+
 #### TESTING-RELATED PACKAGES ####
 # Unit tests
 pytest

@@ -15,6 +15,10 @@ if [ -d $HOME/nltk_data ]; then
     ls $HOME/nltk_data
 fi
 
+# Install libtcmalloc, see
+# https://github.com/tensorflow/tensorflow/issues/6968#issuecomment-279060156
+sudo apt-get install libtcmalloc-minimal4
+export LD_PRELOAD="/usr/lib/libtcmalloc_minimal.so.4"
 
 # Deactivate the travis-provided virtual environment and setup a
 # conda-based environment instead
