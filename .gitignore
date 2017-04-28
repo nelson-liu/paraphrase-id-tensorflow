@@ -88,7 +88,11 @@ ENV/
 # Rope project settings
 .ropeproject
 
-# exclude data
-/data/
-/models/
-/logs/
+# exclude folders/files named data, models or logs in the
+# project root directory, but not anywhere else.
+data
+!*/data
+models
+!*/models
+logs
+!*/logs
