@@ -108,4 +108,4 @@ class TestUtilsSwitchableDropoutWrapper(DuplicateTestCase):
                                               [[0.0, -0.0, -0.0595048],
                                                [0.03207482, -0.07930075, -0.09382694],
                                                [0.0, -0.00405498, -0.0]]])
-            assert_allclose(output_train, expected_output_train, rtol=1e-06)
+            assert_allclose(output_train, expected_output_train, rtol=1e-04)
