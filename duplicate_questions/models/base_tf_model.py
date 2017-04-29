@@ -155,7 +155,9 @@ class BaseTFModel:
         global_step = 0
         init_op = tf.global_variables_initializer()
 
-        with tf.Session() as sess:
+        gpu_options = tf.GPUOptions(allow_growth=True)
+        sess_config = tf.ConfigProto(gpu_options=gpu_options)
+        with tf.Session(config=sess_config) as sess:
             sess.run(init_op)
             # Set up the classes for logging to Tensorboard.
             train_writer = tf.summary.FileWriter(log_path + "/train",
@@ -282,7 +284,10 @@ class BaseTFModel:
         """
         logger.info("num_test_steps is not set, pass in a value "
                     "to show a progress bar.")
-        with tf.Session() as sess:
+
+        gpu_options = tf.GPUOptions(allow_growth=True)
+        sess_config = tf.ConfigProto(gpu_options=gpu_options)
+        with tf.Session(config=sess_config) as sess:
             saver = tf.train.Saver()
             logger.info("Getting latest checkpoint in {}".format(model_load_dir))
             last_checkpoint = tf.train.latest_checkpoint(model_load_dir)
