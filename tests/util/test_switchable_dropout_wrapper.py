@@ -36,28 +36,29 @@ class TestUtilsSwitchableDropoutWrapper(DuplicateTestCase):
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
             output_no_train = rnn_output.eval(feed_dict={is_train: False})
-            expected_output_no_train = np.array([[[0.08825343, 0.01838959, 0.01872513],
-                                                  [0.01195384, -0.14495267, 0.31236988],
+            expected_output_no_train = np.array([[[0.10523333, -0.03578992, 0.16407447],
+                                                  [-0.07642615, -0.1346959, 0.07218226],
                                                   [0.0, 0.0, 0.0]],
-                                                 [[0.0143504, -0.14128588, 0.07712727],
+                                                 [[-0.31979755, -0.12604457, -0.24436688],
                                                   [0.0, 0.0, 0.0],
                                                   [0.0, 0.0, 0.0]],
-                                                 [[-0.10839351, 0.05113239, -0.04910426],
-                                                  [-0.06215987, 0.16528113, -0.00543074],
-                                                  [0.05128077, 0.23328263, -0.04104931]]])
+                                                 [[0.27140033, -0.01063369, 0.11808267],
+                                                  [0.15138564, -0.10808259, 0.13118345],
+                                                  [0.20397078, -0.06317351, 0.21408504]]])
             assert_allclose(output_no_train, expected_output_no_train, rtol=1e-06)
+
             output_train = rnn_output.eval(feed_dict={is_train: True})
-            expected_output_train = np.array([[[0.0, 0.03697259, 0.0],
-                                               [-0.52872497, 0.03966674, -0.24180387],
+            expected_output_train = np.array([[[-0.0, -0.21935862, -0.11160457],
+                                               [-0.0, -0.0, 0.09479073],
                                                [0.0, 0.0, 0.0]],
-                                              [[0.24703449, -0.06437484, 0.15770586],
+                                              [[0.02565068, 0.21709232, -0.0],
                                                [0.0, 0.0, 0.0],
                                                [0.0, 0.0, 0.0]],
-                                              [[-0.23952101, -0.03936104, 0.0442652],
-                                               [-0.3688741, -0.08598197, 0.0],
-                                               [-0.00903562, 0.0, -0.03707428]]])
+                                              [[0.0, 0.0, 0.07740743],
+                                               [0.04682902, -0.14770079, 0.14597748],
+                                               [0.0, 0.09399685, 0.0]]])
             # low precision test, this one seems flaky
-            assert_allclose(output_train, expected_output_train, rtol=1e-04)
+            assert_allclose(output_train, expected_output_train, rtol=1e-06)
 
     @flaky
     def test_switchable_dropout_wrapper_state_is_not_tuple(self):
@@ -87,24 +88,24 @@ class TestUtilsSwitchableDropoutWrapper(DuplicateTestCase):
             sess.run(tf.global_variables_initializer())
             output_no_train = rnn_output.eval(feed_dict={is_train: False})
             expected_output_no_train = np.array(
-                [[[-0.09445292, -0.08269257, 0.1921162],
-                  [0.13077924, -0.16224632, 0.07092731],
+                [[[-0.10366952, -0.01751264, -0.02237115],
+                  [-0.07636562, 0.06660741, 0.02946584],
                   [0.0, 0.0, 0.0]],
-                 [[0.15248382, 0.18584363, -0.12413846],
+                 [[-0.09134783, 0.15928121, 0.05786164],
                   [0.0, 0.0, 0.0],
                   [0.0, 0.0, 0.0]],
-                 [[-0.07077862, -0.11894269, 0.33125928],
-                  [-0.17721169, -0.07561724, 0.25253388],
-                  [-0.18928067, -0.07377248, 0.41105911]]])
+                 [[-0.00575439, -0.22505699, -0.27295753],
+                  [-0.12970942, -0.16395324, -0.06502352],
+                  [-0.16302694, -0.27601245, -0.20045257]]])
             assert_allclose(output_no_train, expected_output_no_train, rtol=1e-06)
             output_train = rnn_output.eval(feed_dict={is_train: True})
-            expected_output_train = np.array([[[0.0, 0.04103347, -0.0],
-                                               [0.26753482, -0.03276764, 0.0240659],
+            expected_output_train = np.array([[[-0.0, 0.13120674, -0.02568678],
+                                               [-0.0, 0.0, -0.20105337],
                                                [0.0, 0.0, 0.0]],
-                                              [[-0.11665035, -0.00709306, 0.01923252],
+                                              [[-0.02063255, 0.25306353, 0.0],
                                                [0.0, 0.0, 0.0],
                                                [0.0, 0.0, 0.0]],
-                                              [[0.04758045, -0.03102016, -0.04817296],
-                                               [0.18634762, -0.04973229, 0.0],
-                                               [-0.10404891, 0.0, 0.0632768]]])
+                                              [[0.0, -0.0, -0.0595048],
+                                               [0.03207482, -0.07930075, -0.09382694],
+                                               [0.0, -0.00405498, -0.0]]])
             assert_allclose(output_train, expected_output_train, rtol=1e-06)

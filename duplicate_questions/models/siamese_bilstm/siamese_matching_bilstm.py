@@ -171,15 +171,19 @@ class SiameseMatchingBiLSTM(BaseTFModel):
 
         rnn_hidden_size = self.rnn_hidden_size
         output_keep_prob = self.output_keep_prob
-        rnn_cell = LSTMCell(rnn_hidden_size, state_is_tuple=True)
-        d_rnn_cell = SwitchableDropoutWrapper(rnn_cell,
-                                              self.is_train,
-                                              output_keep_prob=output_keep_prob)
+        rnn_cell_fw_one = LSTMCell(rnn_hidden_size, state_is_tuple=True)
+        d_rnn_cell_fw_one = SwitchableDropoutWrapper(rnn_cell_fw_one,
+                                                     self.is_train,
+                                                     output_keep_prob=output_keep_prob)
+        rnn_cell_bw_one = LSTMCell(rnn_hidden_size, state_is_tuple=True)
+        d_rnn_cell_bw_one = SwitchableDropoutWrapper(rnn_cell_bw_one,
+                                                     self.is_train,
+                                                     output_keep_prob=output_keep_prob)
         with tf.variable_scope("encode_sentences"):
             # Encode the first sentence.
             (fw_output_one, bw_output_one), _ = tf.nn.bidirectional_dynamic_rnn(
-                cell_fw=d_rnn_cell,
-                cell_bw=d_rnn_cell,
+                cell_fw=d_rnn_cell_fw_one,
+                cell_bw=d_rnn_cell_bw_one,
                 dtype="float",
                 sequence_length=sentence_one_len,
                 inputs=word_embedded_sentence_one,
@@ -188,17 +192,27 @@ class SiameseMatchingBiLSTM(BaseTFModel):
                 # Encode the second sentence, using the same RNN weights.
                 tf.get_variable_scope().reuse_variables()
                 (fw_output_two, bw_output_two), _ = tf.nn.bidirectional_dynamic_rnn(
-                    cell_fw=d_rnn_cell,
-                    cell_bw=d_rnn_cell,
+                    cell_fw=d_rnn_cell_fw_one,
+                    cell_bw=d_rnn_cell_bw_one,
                     dtype="float",
                     sequence_length=sentence_two_len,
                     inputs=word_embedded_sentence_two,
                     scope="encoded_sentence_one")
             else:
                 # Encode the second sentence with a different RNN
+                rnn_cell_fw_two = LSTMCell(rnn_hidden_size, state_is_tuple=True)
+                d_rnn_cell_fw_two = SwitchableDropoutWrapper(
+                    rnn_cell_fw_two,
+                    self.is_train,
+                    output_keep_prob=output_keep_prob)
+                rnn_cell_bw_two = LSTMCell(rnn_hidden_size, state_is_tuple=True)
+                d_rnn_cell_bw_two = SwitchableDropoutWrapper(
+                    rnn_cell_bw_two,
+                    self.is_train,
+                    output_keep_prob=output_keep_prob)
                 (fw_output_two, bw_output_two), _ = tf.nn.bidirectional_dynamic_rnn(
-                    cell_fw=d_rnn_cell,
-                    cell_bw=d_rnn_cell,
+                    cell_fw=d_rnn_cell_fw_two,
+                    cell_bw=d_rnn_cell_bw_two,
                     dtype="float",
                     sequence_length=sentence_two_len,
                     inputs=word_embedded_sentence_two,

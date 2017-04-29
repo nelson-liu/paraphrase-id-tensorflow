@@ -1,7 +1,7 @@
 #### ESSENTIAL LIBRARIES FOR MAIN FUNCTIONALITY ####
 
 # Neural network and related libraries
-tensorflow==1.0.1
+tensorflow==1.1.0
 numpy
 
 # Progress logger
