@@ -170,7 +170,7 @@ class BaseTFModel:
             # Iterate over a generator that returns batches.
             for batch in tqdm(train_batch_generator,
                               total=total_num_train_steps):
-                global_step = sess.run(self.global_step)
+                global_step = sess.run(self.global_step) + 1
 
                 # is_epoch_end is True if we are at the end of an epoch.
                 is_epoch_end = global_step % num_train_steps_per_epoch == 0
