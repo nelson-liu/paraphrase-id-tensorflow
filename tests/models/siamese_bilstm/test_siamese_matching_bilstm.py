@@ -1,4 +1,3 @@
-from argparse import Namespace
 from overrides import overrides
 import math
 import tensorflow as tf
@@ -52,14 +51,13 @@ class TestSiameseMatchingBiLSTM(DuplicateTestCase):
             "output_keep_prob": self.output_keep_prob,
             "share_encoder_weights": self.share_encoder_weights
         }
-        self.config = Namespace(**self.config_dict)
         self.num_train_steps_per_epoch = int(math.ceil(self.train_size / self.batch_size))
         self.num_val_steps = int(math.ceil(self.val_size / self.batch_size))
         self.num_test_steps = int(math.ceil(self.test_size / self.batch_size))
 
     def test_default_does_not_crash(self):
         # Initialize the model
-        model = SiameseMatchingBiLSTM(self.config)
+        model = SiameseMatchingBiLSTM(self.config_dict)
         model.build_graph()
         # Train the model
         model.train(train_batch_generator=self.train_batch_gen,
@@ -78,16 +76,16 @@ class TestSiameseMatchingBiLSTM(DuplicateTestCase):
         # Load and predict with the model
         self.config_dict["mode"] = "test"
         del self.config_dict["word_embedding_matrix"]
-        self.config = Namespace(**self.config_dict)
-        loaded_model = SiameseMatchingBiLSTM(self.config)
+        loaded_model = SiameseMatchingBiLSTM(self.config_dict)
         loaded_model.build_graph()
-        loaded_model.predict(self.test_batch_gen, self.num_test_steps, self.TEST_DIR)
+        loaded_model.predict(test_batch_generator=self.test_batch_gen,
+                             model_load_dir=self.TEST_DIR,
+                             num_test_steps=self.num_test_steps)
 
     def test_non_sharing_encoders_does_not_crash(self):
         # Initialize the model
         self.config_dict["share_encoder_weights"] = False
-        self.config = Namespace(**self.config_dict)
-        model = SiameseMatchingBiLSTM(self.config)
+        model = SiameseMatchingBiLSTM(self.config_dict)
         model.build_graph()
         # Train the model
         model.train(train_batch_generator=self.train_batch_gen,
@@ -106,7 +104,8 @@ class TestSiameseMatchingBiLSTM(DuplicateTestCase):
         # Load and predict with the model
         self.config_dict["mode"] = "test"
         del self.config_dict["word_embedding_matrix"]
-        self.config = Namespace(**self.config_dict)
-        loaded_model = SiameseMatchingBiLSTM(self.config)
+        loaded_model = SiameseMatchingBiLSTM(self.config_dict)
         loaded_model.build_graph()
-        loaded_model.predict(self.test_batch_gen, self.num_test_steps, self.TEST_DIR)
+        loaded_model.predict(test_batch_generator=self.test_batch_gen,
+                             model_load_dir=self.TEST_DIR,
+                             num_test_steps=self.num_test_steps)
