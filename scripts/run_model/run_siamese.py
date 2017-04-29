@@ -53,7 +53,7 @@ def main():
                            default=os.path.join(project_dir,
                                                 "data/processed/quora/"
                                                 "test_final.csv"))
-    argparser.add_argument("--batch_size", type=int, default=32,
+    argparser.add_argument("--batch_size", type=int, default=128,
                            help="Number of instances per batch.")
     argparser.add_argument("--num_epochs", type=int, default=10,
                            help=("Number of epochs to perform in "
@@ -170,7 +170,7 @@ def main():
     vars(config)["word_embedding_matrix"] = embedding_matrix
 
     # Initialize the model.
-    model = SiameseBiLSTM(config)
+    model = SiameseBiLSTM(vars(config))
     model.build_graph()
 
     if mode == "train":
