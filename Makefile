@@ -32,6 +32,14 @@ lint:
 glove:
 	wget -P data/external/ -O data/external/glove.6B.zip http://nlp.stanford.edu/data/glove.6B.zip
 
+# Create auxiliary directories, if they don't exist
+aux_dirs:
+	./scripts/data/make_auxiliary_dirs.sh
+
+# Using the raw quora dataset, clean and split to produce the final dataset
+quora_data:
+	./scripts/data/quora/clean_and_split_quora_dataset.sh
+
 #################################################################################
 # Self Documenting Commands                                                     #
 #################################################################################
