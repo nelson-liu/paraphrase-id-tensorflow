@@ -9,7 +9,7 @@ and semantic textual similarity tasks.
 ## Installation
 
 This project relies on Python 3.5, and the package requirements are in
-`[requirements.txt](./requirements.txt)`.
+[`requirements.txt`](./requirements.txt).
 
 To install the requirements:
 
@@ -19,7 +19,7 @@ pip install -r requirements.txt
 
 ### GPU Training and Inference
 
-Note that the `[requirements.txt](./requirements.txt)` file specify `tensorflow`
+Note that the [`requirements.txt`](./requirements.txt) file specify `tensorflow`
 as a dependency, which is a CPU-bound version of tensorflow. If you have a gpu,
 you should uninstall this CPU tensorflow and install the GPU version by running:
 
@@ -88,8 +88,7 @@ To train a model or load + predict with a model, then run the scripts in `script
     ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
     │   └── figures        <- Generated graphics and figures to be used in reporting
     │
-    ├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
-    │                         generated with `pip freeze > requirements.txt`
+    ├── requirements.txt   <- The requirements file for reproducing the analysis environment
     │
     ├── duplicate_questions<- Module with source code for models and data.
     │   ├── data           <- Methods and classes for manipulating data.
