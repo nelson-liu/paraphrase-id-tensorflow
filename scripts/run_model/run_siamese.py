@@ -62,7 +62,7 @@ def main():
                            help=("number of epochs with no validation "
                                  "accuracy improvement after which training "
                                  "will be stopped"))
-    argparser.add_argument("--max_sentence_length", type=int, default=50,
+    argparser.add_argument("--num_sentence_words", type=int, default=30,
                            help=("The maximum length of a sentence. Longer "
                                  "sentences will be truncated, and shorter "
                                  "ones will be padded."))
@@ -131,11 +131,12 @@ def main():
     if mode == "train":
         # Read the train data from a file, and use it to index the validation data
         data_manager = DataManager(STSInstance)
+        num_sentence_words = config.num_sentence_words
         train_data_gen, train_data_size = data_manager.get_train_data_from_file(
-            [config.train_file])
+            [config.train_file], max_lengths={"num_sentence_words": num_sentence_words})
         train_batch_gen = data_manager.batch_generator(train_data_gen, batch_size)
         val_data_gen, val_data_size = data_manager.get_validation_data_from_file(
-            [config.val_file])
+            [config.val_file], max_lengths={"num_sentence_words": num_sentence_words})
         val_batch_gen = data_manager.batch_generator(val_data_gen, batch_size)
     else:
         # Load the fitted DataManager, and use it to index the test data
