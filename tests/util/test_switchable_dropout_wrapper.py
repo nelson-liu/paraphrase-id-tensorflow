@@ -45,7 +45,9 @@ class TestUtilsSwitchableDropoutWrapper(DuplicateTestCase):
                                                  [[0.27140033, -0.01063369, 0.11808267],
                                                   [0.15138564, -0.10808259, 0.13118345],
                                                   [0.20397078, -0.06317351, 0.21408504]]])
-            assert_allclose(output_no_train, expected_output_no_train, rtol=1e-06)
+            assert_allclose(output_no_train,
+                            expected_output_no_train * d_rnn_cell._output_keep_prob,
+                            rtol=1e-06)
 
             output_train = rnn_output.eval(feed_dict={is_train: True})
             expected_output_train = np.array([[[-0.0, -0.21935862, -0.11160457],
@@ -97,7 +99,9 @@ class TestUtilsSwitchableDropoutWrapper(DuplicateTestCase):
                  [[-0.00575439, -0.22505699, -0.27295753],
                   [-0.12970942, -0.16395324, -0.06502352],
                   [-0.16302694, -0.27601245, -0.20045257]]])
-            assert_allclose(output_no_train, expected_output_no_train, rtol=1e-06)
+            assert_allclose(output_no_train,
+                            expected_output_no_train * d_rnn_cell._output_keep_prob,
+                            rtol=1e-06)
             output_train = rnn_output.eval(feed_dict={is_train: True})
             expected_output_train = np.array([[[-0.0, 0.13120674, -0.02568678],
                                                [-0.0, 0.0, -0.20105337],

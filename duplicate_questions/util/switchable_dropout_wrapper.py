@@ -28,7 +28,7 @@ class SwitchableDropoutWrapper(DropoutWrapper):
         # Set the outputs and state to be the dropped out version if we are
         # training, and no dropout if we are not training.
         outputs = tf.cond(self.is_train, lambda: outputs_do,
-                          lambda: outputs)
+                          lambda: outputs * (self._output_keep_prob))
         if isinstance(state, tuple):
             new_state = state.__class__(
                 *[tf.cond(self.is_train, lambda: new_state_do_i,
