@@ -29,7 +29,8 @@ class EmbeddingManager():
 
     def get_embedding_matrix(self, embedding_dim,
                              pretrained_embeddings_file_path=None,
-                             pretrained_embeddings_dict=None):
+                             pretrained_embeddings_dict=None,
+                             namespace="words"):
         """
         Given an int embedding_dim, initialize an embedding matrix for each
         index in the data_indexer. If a pretrained embeddings file is
@@ -62,6 +63,10 @@ class EmbeddingManager():
         pretrained_embeddings_dict: dictionary of str:ndarray, default=None
             A dictionary of words and their vectors. Each word key should
             be a string, and each vector value should be a NumPy array.
+
+        namespace: str, optional (default="words")
+            A string indicating the DataIndexer namespace to get the maximum
+            vocab size from.
 
         Returns
         -------
@@ -129,7 +134,7 @@ class EmbeddingManager():
                                  "of size {}".format(embedding_dim,
                                                      embeddings_dict_dim))
 
-        vocab_size = self.data_indexer.get_vocab_size()
+        vocab_size = self.data_indexer.get_vocab_size(namespace=namespace)
         # Build the embedding matrix
         embedding_matrix = self.initialize_random_matrix((vocab_size,
                                                           embedding_dim))
