@@ -18,14 +18,12 @@ class EmbeddingManager():
         self.data_indexer = data_indexer
 
     @staticmethod
-    def initialize_random_matrix(shape, seed=0):
+    def initialize_random_matrix(shape, scale=0.05, seed=0):
         if len(shape) != 2:
             raise ValueError("Shape of embedding matrix must be 2D, "
                              "got shape {}".format(shape))
         numpy_rng = np.random.RandomState(seed)
-        return numpy_rng.multivariate_normal(np.zeros(shape[1]),
-                                             np.eye(shape[1]),
-                                             size=shape[0])
+        return numpy_rng.uniform(low=-scale, high=scale, size=shape)
 
     def get_embedding_matrix(self, embedding_dim,
                              pretrained_embeddings_file_path=None,
