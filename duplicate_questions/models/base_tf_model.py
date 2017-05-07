@@ -282,8 +282,9 @@ class BaseTFModel:
             is read; inference keeps going until the generator is exhausted. It
             is used to set a total for the progress bar.
         """
-        logger.info("num_test_steps is not set, pass in a value "
-                    "to show a progress bar.")
+        if num_test_steps is None:
+            logger.info("num_test_steps is not set, pass in a value "
+                        "to show a progress bar.")
 
         gpu_options = tf.GPUOptions(allow_growth=True)
         sess_config = tf.ConfigProto(gpu_options=gpu_options)
