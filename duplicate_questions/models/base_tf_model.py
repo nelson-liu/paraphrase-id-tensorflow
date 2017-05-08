@@ -183,6 +183,7 @@ class BaseTFModel:
                 # Do a gradient update, and log results to Tensorboard
                 # if necessary.
                 if global_step % log_period == 0:
+                    # Record summary with gradient update
                     train_loss, _, train_summary = sess.run(
                         [self.loss,
                          self.training_op,
@@ -190,6 +191,7 @@ class BaseTFModel:
                         feed_dict=feed_dict)
                     train_writer.add_summary(train_summary, global_step)
                 else:
+                    # Do a gradient update without recording anything.
                     train_loss, _ = sess.run(
                         [self.loss,
                          self.training_op],
