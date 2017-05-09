@@ -20,19 +20,13 @@ class TestSiameseMatchingBiLSTM(DuplicateTestCase):
         self.write_duplicate_questions_validation_file()
         self.write_duplicate_questions_test_file()
         self.data_manager = DataManager(STSInstance)
-        self.batch_size = 3
-        self.train_gen, self.train_size = self.data_manager.get_train_data_from_file(
+        self.batch_size = 2
+        self.get_train_gen, self.train_size = self.data_manager.get_train_data_from_file(
             [self.TRAIN_FILE])
-        self.train_batch_gen = self.data_manager.batch_generator(self.train_gen,
-                                                                 self.batch_size)
-        self.val_gen, self.val_size = self.data_manager.get_validation_data_from_file(
+        self.get_val_gen, self.val_size = self.data_manager.get_validation_data_from_file(
             [self.VALIDATION_FILE])
-        self.val_batch_gen = self.data_manager.batch_generator(self.val_gen,
-                                                               self.batch_size)
-        self.test_gen, self.test_size = self.data_manager.get_test_data_from_file(
+        self.get_test_gen, self.test_size = self.data_manager.get_test_data_from_file(
             [self.TEST_FILE])
-        self.test_batch_gen = self.data_manager.batch_generator(self.test_gen,
-                                                                self.batch_size)
 
         self.embedding_manager = EmbeddingManager(self.data_manager.data_indexer)
         self.word_embedding_dim = 5
@@ -60,16 +54,17 @@ class TestSiameseMatchingBiLSTM(DuplicateTestCase):
         model = SiameseMatchingBiLSTM(self.config_dict)
         model.build_graph()
         # Train the model
-        model.train(train_batch_generator=self.train_batch_gen,
-                    val_batch_generator=self.val_batch_gen,
+        model.train(get_train_instance_generator=self.get_train_gen,
+                    get_val_instance_generator=self.get_val_gen,
+                    batch_size=self.batch_size,
                     num_train_steps_per_epoch=self.num_train_steps_per_epoch,
                     num_epochs=2,
                     num_val_steps=self.num_val_steps,
+                    save_path=self.TEST_DIR,
+                    log_path=self.TEST_DIR,
                     log_period=2,
                     val_period=2,
-                    log_path=self.TEST_DIR,
                     save_period=2,
-                    save_path=self.TEST_DIR,
                     patience=0)
 
         tf.reset_default_graph()
@@ -78,8 +73,9 @@ class TestSiameseMatchingBiLSTM(DuplicateTestCase):
         del self.config_dict["word_embedding_matrix"]
         loaded_model = SiameseMatchingBiLSTM(self.config_dict)
         loaded_model.build_graph()
-        loaded_model.predict(test_batch_generator=self.test_batch_gen,
+        loaded_model.predict(get_test_instance_generator=self.get_test_gen,
                              model_load_dir=self.TEST_DIR,
+                             batch_size=self.batch_size,
                              num_test_steps=self.num_test_steps)
 
     def test_non_sharing_encoders_does_not_crash(self):
@@ -88,16 +84,17 @@ class TestSiameseMatchingBiLSTM(DuplicateTestCase):
         model = SiameseMatchingBiLSTM(self.config_dict)
         model.build_graph()
         # Train the model
-        model.train(train_batch_generator=self.train_batch_gen,
-                    val_batch_generator=self.val_batch_gen,
+        model.train(get_train_instance_generator=self.get_train_gen,
+                    get_val_instance_generator=self.get_val_gen,
+                    batch_size=self.batch_size,
                     num_train_steps_per_epoch=self.num_train_steps_per_epoch,
                     num_epochs=2,
                     num_val_steps=self.num_val_steps,
+                    save_path=self.TEST_DIR,
+                    log_path=self.TEST_DIR,
                     log_period=2,
                     val_period=2,
-                    log_path=self.TEST_DIR,
                     save_period=2,
-                    save_path=self.TEST_DIR,
                     patience=0)
 
         tf.reset_default_graph()
@@ -106,6 +103,7 @@ class TestSiameseMatchingBiLSTM(DuplicateTestCase):
         del self.config_dict["word_embedding_matrix"]
         loaded_model = SiameseMatchingBiLSTM(self.config_dict)
         loaded_model.build_graph()
-        loaded_model.predict(test_batch_generator=self.test_batch_gen,
+        loaded_model.predict(get_test_instance_generator=self.get_test_gen,
                              model_load_dir=self.TEST_DIR,
+                             batch_size=self.batch_size,
                              num_test_steps=self.num_test_steps)

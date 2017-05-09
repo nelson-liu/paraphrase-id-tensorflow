@@ -89,14 +89,14 @@ def main():
     argparser.add_argument("--log_period", type=int, default=10,
                            help=("Number of steps between each summary "
                                  "op evaluation."))
-    argparser.add_argument("--val_period", type=int, default=1000,
+    argparser.add_argument("--val_period", type=int, default=250,
                            help=("Number of steps between each evaluation of "
                                  "validation performance."))
     argparser.add_argument("--log_dir", type=str,
                            default=os.path.join(project_dir,
                                                 "logs/"),
                            help=("Directory to save logs to."))
-    argparser.add_argument("--save_period", type=int, default=1000,
+    argparser.add_argument("--save_period", type=int, default=250,
                            help=("Number of steps between each "
                                  "model checkpoint"))
     argparser.add_argument("--save_dir", type=str,
@@ -125,21 +125,17 @@ def main():
         # validation data
         data_manager = DataManager(STSInstance)
         num_sentence_words = config.num_sentence_words
-        train_data_gen, train_data_size = data_manager.get_train_data_from_file(
+        get_train_data_gen, train_data_size = data_manager.get_train_data_from_file(
             [config.train_file], max_lengths={"num_sentence_words": num_sentence_words})
-        train_batch_gen = data_manager.batch_generator(train_data_gen, batch_size)
-        val_data_gen, val_data_size = data_manager.get_validation_data_from_file(
+        get_val_data_gen, val_data_size = data_manager.get_validation_data_from_file(
             [config.val_file], max_lengths={"num_sentence_words": num_sentence_words})
-        val_batch_gen = data_manager.batch_generator(val_data_gen, batch_size)
     else:
         # Load the fitted DataManager, and use it to index the test data
         logger.info("Loading pickled DataManager from {}".format(
             config.dataindexer_load_path))
         data_manager = pickle.load(open(config.dataindexer_load_path, "rb"))
-        test_data_gen, test_data_size = data_manager.get_test_data_from_file(
+        get_test_data_gen, test_data_size = data_manager.get_test_data_from_file(
             [config.test_file])
-        test_batch_gen = data_manager.batch_generator(test_data_gen,
-                                                      batch_size)
 
     vars(config)["word_vocab_size"] = data_manager.data_indexer.get_vocab_size()
 
@@ -192,24 +188,28 @@ def main():
                     open(os.path.join(save_dir, data_manager_pickle_name), "wb"))
 
         patience = config.early_stopping_patience
-        model.train(train_batch_generator=train_batch_gen,
-                    val_batch_generator=val_batch_gen,
+        model.train(get_train_instance_generator=get_train_data_gen,
+                    get_val_instance_generator=get_val_data_gen,
+                    batch_size=batch_size,
                     num_train_steps_per_epoch=num_train_steps_per_epoch,
                     num_epochs=num_epochs,
                     num_val_steps=num_val_steps,
+                    save_path=save_path,
+                    log_path=log_path,
                     log_period=log_period,
                     val_period=val_period,
-                    log_path=log_path,
                     save_period=save_period,
-                    save_path=save_path,
                     patience=patience)
     else:
         # Predict with the model
         model_load_dir = config.model_load_dir
         num_test_steps = int(math.ceil(test_data_size / batch_size))
         # Numpy array of shape (num_test_examples, 2)
-        raw_predictions = model.predict(test_batch_gen, num_test_steps,
-                                        model_load_dir)
+        raw_predictions = model.predict(get_test_instance_generator=get_test_data_gen,
+                                        model_load_dir=model_load_dir,
+                                        batch_size=batch_size,
+                                        num_test_steps=num_test_steps)
+
         # Remove the first column, so we're left with just the probabilities
         # that a question is a duplicate.
         is_duplicate_probabilities = np.delete(raw_predictions, 0, 1)
