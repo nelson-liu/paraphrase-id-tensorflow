@@ -213,8 +213,9 @@ class BaseTFModel:
                     if global_step % save_period == 0:
                         saver.save(sess, save_path, global_step=global_step)
 
-                # End of the epoch, so check validation loss
-                # and stop if applicable.
+                # End of the epoch, so save the model and check validation loss,
+                # stopping if applicable.
+                saver.save(sess, save_path, global_step=global_step)
                 val_acc, val_loss, val_summary = self._evaluate_on_validation(
                     get_val_instance_generator=get_val_instance_generator,
                     batch_size=batch_size,
