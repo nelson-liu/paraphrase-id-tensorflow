@@ -147,6 +147,17 @@ class IndexedSTSInstance(IndexedInstance):
         self.second_sentence_indices = second_sentence_indices
 
     def get_int_word_indices(self):
+        """
+        The method extracts the indices corresponding to the words in this
+        instance.
+
+        Returns
+        -------
+        word_indices: tuple of List[int]
+            A tuple of List[int], where the first list refers to the indices of the words
+            in the first sentence and the second list refers to the indices of the words
+            in the second sentence.
+        """
         first_sentence_word_indices = [idxd_word.word_index for idxd_word in
                                        self.first_sentence_indices]
         second_sentence_word_indices = [idxd_word.word_index for idxd_word in
@@ -154,6 +165,20 @@ class IndexedSTSInstance(IndexedInstance):
         return (first_sentence_word_indices, second_sentence_word_indices)
 
     def get_int_char_indices(self):
+        """
+        The method extracts the indices corresponding to the characters for
+        each word in this instance.
+
+        Returns
+        -------
+        char_indices: tuple of List[List[int]]
+            A tuple of List[int], where the first list refers to the indices of
+            the characters of the words in the first sentence. Each inner list
+            returned contains the character indices, and the length of the list
+            returned corresponds to the number of words in the sentence. The
+            second list refers to the indices of the characters of
+            the words in the second sentence.
+        """
         first_sentence_char_indices = [idxd_word.char_indices for idxd_word in
                                        self.first_sentence_indices]
         second_sentence_char_indices = [idxd_word.char_indices for idxd_word in
