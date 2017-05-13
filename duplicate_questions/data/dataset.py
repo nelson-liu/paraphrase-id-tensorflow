@@ -286,3 +286,16 @@ class IndexedDataset(Dataset):
             instance_inputs, _ = instance.as_testing_data(mode=mode)
             inputs.append(instance_inputs)
         return inputs, []
+
+    def sort(self, reverse=True):
+        """
+        Sorts the list of IndexedInstances, in either ascending or descending order,
+        if the instances are IndexedSTSInstances
+
+        Parameters
+        ----------
+        reverse: boolean, optional (default=True)
+            Boolean which detrmines what reverse parameter is used in the
+            sorting function.
+        """
+        self.instances.sort(reverse=reverse)

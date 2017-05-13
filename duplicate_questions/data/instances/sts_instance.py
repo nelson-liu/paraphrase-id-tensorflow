@@ -319,7 +319,8 @@ class IndexedSTSInstance(IndexedInstance):
 
     @overrides
     def as_testing_data(self, mode="word"):
-        """Transforms the instance into a collection of NumPy
+        """
+        Transforms the instance into a collection of NumPy
         arrays suitable for use as testing data in the model.
 
         Returns
@@ -361,3 +362,78 @@ class IndexedSTSInstance(IndexedInstance):
             return ((first_sentence_word_array, first_sentence_char_matrix,
                      second_sentence_word_array, second_sentence_char_matrix),
                     ())
+
+    @overrides
+    def __eq__(self, other):
+        """
+        Checks for equality between this instance and another instance.
+        Two IndexedSTSInstance objects are equal when they have the same
+        sentence lengths and the same word indices for each sentence.
+
+        Parameters
+        ----------
+        other: IndexedSTSInstance
+            The IndexedSTSInstance this instance is being compared against.
+
+        Returns
+        -------
+        equality: boolean
+            Returns whether or not the two instances are equal.
+        """
+
+        if not isinstance(other, self.__class__):
+            return False
+
+        this_length = self.get_lengths()["num_sentence_words"]
+        other_length = other.get_lengths()["num_sentence_words"]
+        if this_length == other_length:
+            sentence_1, sentence_2 = self.get_int_word_indices()
+            other_sentence_1, other_sentence_2 = other.get_int_word_indices()
+            for word_instance_1, word_instance_2 in zip(sentence_1,
+                                                        other_sentence_1):
+                if word_instance_1 != word_instance_2:
+                    return False
+            for word_instance_1, word_instance_2 in zip(sentence_2,
+                                                        other_sentence_2):
+                if word_instance_1 != word_instance_2:
+                    return False
+            return True
+        else:
+            return False
+
+    @overrides
+    def __lt__(self, other):
+        """
+        Checks for the less than relationship between this instance
+        and another instance. if the maximum length of the two sentences in this instance
+        is less than the maximum length of the two sentences in the other instance.
+
+        Parameters
+        ----------
+        other: IndexedSTSInstance
+            The IndexedSTSInstance this instance is being compared against.
+
+        Returns
+        -------
+        lt: boolean
+            Returns whether or not the this instance is less than the other.
+        """
+        if not isinstance(other, self.__class__):
+            return False
+
+        this_length = self.get_lengths()["num_sentence_words"]
+        other_length = other.get_lengths()["num_sentence_words"]
+        if this_length == other_length:
+            sentence_1, sentence_2 = self.get_int_word_indices()
+            other_sentence_1, other_sentence_2 = other.get_int_word_indices()
+            for word_instance_1, word_instance_2 in zip(sentence_1,
+                                                        other_sentence_1):
+                if word_instance_1 != word_instance_2:
+                    return word_instance_1 < word_instance_2
+            for word_instance_1, word_instance_2 in zip(sentence_2,
+                                                        other_sentence_2):
+                if word_instance_1 != word_instance_2:
+                    return word_instance_1 < word_instance_2
+            return False
+        else:
+            return this_length < other_length

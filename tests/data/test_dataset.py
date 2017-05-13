@@ -319,3 +319,22 @@ class TestIndexedDataset(DuplicateTestCase):
                                                               [5, 1, 0], [2, 3, 0]]))
         with self.assertRaises(ValueError):
             indexed_dataset.as_testing_data(mode="char")
+
+    def test_sort(self):
+        # lengths: 3, 4, 1, 2, 2
+        sorted_instances = [IndexedSTSInstance([IndexedInstanceWord(3, [1, 4, 1]),
+                                                IndexedInstanceWord(1, [1, 5])],
+                                               [IndexedInstanceWord(3, [1, 4, 1]),
+                                                IndexedInstanceWord(1, [1, 5]),
+                                                IndexedInstanceWord(3, [1, 4, 1]),
+                                                IndexedInstanceWord(2, [2, 1])],
+                                               [1, 0]),
+                            IndexedSTSInstance([IndexedInstanceWord(1, [1, 5]),
+                                                IndexedInstanceWord(2, [2, 1]),
+                                                IndexedInstanceWord(3, [1, 4, 1])],
+                                               [IndexedInstanceWord(2, [2, 1]),
+                                                IndexedInstanceWord(3, [1, 4, 1])],
+                                               [0, 1])]
+        self.assertNotEqual(sorted_instances, self.indexed_dataset.instances)
+        self.indexed_dataset.sort()
+        self.assertEquals(sorted_instances, self.indexed_dataset.instances)

@@ -244,3 +244,50 @@ class TestIndexedSTSInstance(DuplicateTestCase):
     def test_as_testing_data_error(self):
         with self.assertRaises(ValueError):
             self.instance.as_testing_data(mode="words+character")
+
+    def test_equals(self):
+        instance_1 = IndexedSTSInstance([IndexedInstanceWord(1, [1, 2]),
+                                         IndexedInstanceWord(4, [1, 2, 6])],
+                                        [IndexedInstanceWord(1, [1, 2]),
+                                         IndexedInstanceWord(3, [5])],
+                                        None)
+
+        instance_2 = IndexedSTSInstance([IndexedInstanceWord(1, [1, 2]),
+                                         IndexedInstanceWord(4, [1, 2, 6])],
+                                        [IndexedInstanceWord(1, [1, 2]),
+                                         IndexedInstanceWord(3, [5])],
+                                        None)
+
+        instance_3 = IndexedSTSInstance([IndexedInstanceWord(1, [1, 2]),
+                                         IndexedInstanceWord(1, [2, 2])],
+                                        [IndexedInstanceWord(1, [1, 2]),
+                                         IndexedInstanceWord(3, [5])],
+                                        None)
+        instance_4 = IndexedSTSInstance([IndexedInstanceWord(1, [1, 2])],
+                                        [IndexedInstanceWord(1, [2, 2])],
+                                        None)
+        self.assertNotEquals(instance_1, instance_4)
+        self.assertNotEquals(instance_1, instance_3)
+        self.assertFalse(instance_1.__eq__(0))
+        self.assertEquals(instance_1, instance_2)
+
+    def test_less_than(self):
+        instance_1 = IndexedSTSInstance([IndexedInstanceWord(1, [1, 2]),
+                                         IndexedInstanceWord(4, [1, 2, 6])],
+                                        [IndexedInstanceWord(1, [1, 2]),
+                                         IndexedInstanceWord(3, [5])],
+                                        None)
+
+        instance_2 = IndexedSTSInstance([IndexedInstanceWord(1, [1, 2]),
+                                         IndexedInstanceWord(4, [1, 2, 6])],
+                                        [IndexedInstanceWord(2, [2, 2]),
+                                         IndexedInstanceWord(3, [5])],
+                                        None)
+
+        instance_3 = IndexedSTSInstance([IndexedInstanceWord(1, [1, 2])],
+                                        [IndexedInstanceWord(1, [2, 2])],
+                                        None)
+        self.assertFalse(instance_1.__lt__(0))
+        self.assertFalse(instance_2.__lt__(instance_1))
+        self.assertLess(instance_1, instance_2)
+        self.assertLess(instance_3, instance_2)
