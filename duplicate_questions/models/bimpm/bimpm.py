@@ -544,7 +544,7 @@ class BiMPM(BaseTFModel):
                      self.sentence_two_word: inputs[2],
                      self.sentence_two_char: inputs[3],
                      self.y_true: targets[0],
-                     self.is_train: True}
+                     self.is_train: False}
         return feed_dict
 
     @overrides
