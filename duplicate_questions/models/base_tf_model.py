@@ -223,9 +223,11 @@ class BaseTFModel:
                     session=sess)
                 val_writer.add_summary(val_summary, global_step)
 
-                # Get the lowest validation loss in the last
-                # patience+1 epochs
-                patience_val_losses = epoch_validation_losses[-(patience + 1):]
+                epoch_validation_losses.append(val_loss)
+
+                # Get the lowest validation loss, with regards to the patience
+                # threshold.
+                patience_val_losses = epoch_validation_losses[:-(patience + 1)]
                 if patience_val_losses:
                     min_patience_val_loss = min(patience_val_losses)
                 else:
@@ -239,10 +241,9 @@ class BaseTFModel:
                                                 patience,
                                                 val_loss))
                     break
-                epoch_validation_losses.append(val_loss)
 
         # Done training!
-        logger.info("Finished {} epochs!".format(num_epochs))
+        logger.info("Finished {} epochs!".format(epoch + 1))
 
     def predict(self, get_test_instance_generator, model_load_dir, batch_size,
                 num_test_steps=None):
