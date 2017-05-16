@@ -40,6 +40,13 @@ aux_dirs:
 quora_data:
 	./scripts/data/quora/clean_and_split_quora_dataset.sh
 
+# Run tests with py.test on CPU
+test:
+	CUDA_VISIBLE_DEVICES="" py.test
+
+test_verbose:
+	CUDA_VISIBLE_DEVICES="" py.test -v -s
+
 #################################################################################
 # Self Documenting Commands                                                     #
 #################################################################################
