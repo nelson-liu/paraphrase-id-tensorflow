@@ -111,6 +111,11 @@ def main():
                            help=("Identifying model name for this run. If"
                                  "predicting, you probably want this "
                                  "to be the same as the train run_id"))
+    argparser.add_argument("--reweight_predictions_for_kaggle", action="store_true",
+                           help=("Only relevant when predicting. Whether to"
+                                 "reweight the prediction probabilities to "
+                                 "account for class proportion discrepancy "
+                                 "between train and test."))
 
     config = argparser.parse_args()
 
@@ -213,6 +218,17 @@ def main():
         # Remove the first column, so we're left with just the probabilities
         # that a question is a duplicate.
         is_duplicate_probabilities = np.delete(raw_predictions, 0, 1)
+
+        # The class balance between kaggle train and test seems different.
+        # This edits prediction probability to account for the discrepancy.
+        # See: https://www.kaggle.com/c/quora-question-pairs/discussion/31179
+        if config.reweight_predictions_for_kaggle:
+            positive_weight = 0.165 / 0.37
+            negative_weight = (1 - 0.165) / (1 - 0.37)
+            is_duplicate_probabilities = ((positive_weight * is_duplicate_probabilities) /
+                                          (positive_weight * is_duplicate_probabilities +
+                                           negative_weight *
+                                           (1 - is_duplicate_probabilities)))
 
         # Write the predictions to an output submission file
         output_predictions_path = os.path.join(log_path, model_name + "-" +
