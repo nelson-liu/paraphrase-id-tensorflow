@@ -32,7 +32,7 @@ def bilateral_matching(sentence_one_fw_representation, sentence_one_bw_represent
         Tensor of shape (batch_size, num_sentence_words, context_rnn_hidden size)
         representing sentence_two as encoded by the backward layer of a BiLSTM.
 
-    sentence_one_mask: Tensor
+n    sentence_one_mask: Tensor
         Binary Tensor of shape (batch_size, num_sentence_words), indicating which
         positions in sentence one are padding (0) and which are not (1).
 
@@ -112,7 +112,7 @@ def bilateral_matching(sentence_one_fw_representation, sentence_one_bw_represent
         training=is_train,
         name="match_two_to_one_dropout")
 
-    # Shapes: (batch_size, num_sentence_words, 13*multiperspective_dims)
+    # Shapes: (batch_size, num_sentence_words, 8*multiperspective_dims)
     return match_one_to_two_representations, match_two_to_one_representations
 
 
@@ -232,30 +232,28 @@ def match_sequences(sentence_a_fw, sentence_a_bw, sentence_b_fw, sentence_b_bw,
         # Apply forward and backward pool matching.
         if with_pool_match:
             # Forward Pooling-Matching: each timestep of sentence_a_fw vs.
-            # each element of sentence_b_fw, then taking the elementwise maximum
-            # and elementwise mean.
+            # each element of sentence_b_fw, then taking the elementwise mean.
             with tf.variable_scope("forward_pooling_matching"):
                 # The weights for the matching function.
                 fw_pooling_params = tf.get_variable(
                     "forward_pooling_matching_params",
                     shape=[multiperspective_dims, sentence_encoding_dim],
                     dtype="float")
-                # Shape: (batch_size, num_sentence_words, 2*multiperspective_dims)
+                # Shape: (batch_size, num_sentence_words, multiperspective_dims)
                 fw_pooling_match_output = pooling_matching(
                     sentence_a_fw,
                     sentence_b_fw,
                     fw_pooling_params)
                 matched_representations.append(fw_pooling_match_output)
             # Backward Pooling-Matching: each timestep of sentence_a_bw vs.
-            # each element of sentence_b_bw, then taking the elementwise maximum
-            # and elementwise mean.
+            # each element of sentence_b_bw, then taking the elementwise mean.
             with tf.variable_scope("backward_pooling_matching"):
                 # The weights for the matching function
                 bw_pooling_params = tf.get_variable(
                     "backward_pooling_matching_params",
                     shape=[multiperspective_dims, sentence_encoding_dim],
                     dtype="float")
-                # Shape: (batch_size, num_sentence_words, 2*multiperspective_dims)
+                # Shape: (batch_size, num_sentence_words, multiperspective_dims)
                 bw_pooling_match_output = pooling_matching(
                     sentence_a_bw,
                     sentence_b_bw,
@@ -341,16 +339,6 @@ def match_sequences(sentence_a_fw, sentence_a_bw, sentence_b_fw, sentence_b_bw,
                     bw_max_attentive_params)
                 matched_representations.append(bw_max_attentive_matching_output)
 
-    # Adding the mean pooled and max pooled similarity matrices is in the
-    # original code, but not the paper.
-    matched_representations.append(tf.reduce_max(fw_similarity_matrix,
-                                                 axis=2, keep_dims=True))
-    matched_representations.append(tf.reduce_mean(fw_similarity_matrix,
-                                                  axis=2, keep_dims=True))
-    matched_representations.append(tf.reduce_max(bw_similarity_matrix,
-                                                 axis=2, keep_dims=True))
-    matched_representations.append(tf.reduce_mean(bw_similarity_matrix,
-                                                  axis=2, keep_dims=True))
     return matched_representations
 
 
@@ -551,9 +539,8 @@ def pooling_matching(sentence_a_representation,
     #         multiperspective_dims)
     matching_matrix = tf.map_fn(single_instance, elems, dtype="float")
     # Take the max and mean pool of the matching matrix.
-    # Shape: (batch_size, num_sentence_words, 2*multiperspective_dims)
-    return tf.concat([tf.reduce_max(matching_matrix, axis=2),
-                      tf.reduce_mean(matching_matrix, axis=2)], 2)
+    # Shape: (batch_size, num_sentence_words, multiperspective_dims)
+    return tf.reduce_mean(matching_matrix, axis=2)
 
 
 def attentive_matching(input_sentence, att_matrix, weights):

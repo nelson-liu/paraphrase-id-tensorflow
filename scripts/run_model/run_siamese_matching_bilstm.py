@@ -21,10 +21,11 @@ logger = logging.getLogger(__name__)
 
 def main():
     project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
+
     # Parse config arguments
     argparser = argparse.ArgumentParser(
-        description=("Siamese BiLSTM model with added matching layer"
-                     "for question duplicate detection."))
+        description=("Run the Siamese BiLSTM model with an added "
+                     "matching layer for paraphase detection."))
     argparser.add_argument("mode", type=str,
                            choices=["train", "predict"],
                            help=("One of {train|predict}, to "
@@ -37,7 +38,7 @@ def main():
                                  "load for evaluation or prediction. The "
                                  "latest checkpoint will be loaded."))
     argparser.add_argument("--dataindexer_load_path", type=str,
-                           help=("The path to the dataindexer fit on the "
+                           help=("The path to the DataIndexer fit on the "
                                  "train data, so we can properly index the "
                                  "test data for evaluation or prediction."))
     argparser.add_argument("--train_file", type=str,

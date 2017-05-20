@@ -19,9 +19,12 @@ logger = logging.getLogger(__name__)
 
 def main():
     project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
+
     # Parse config arguments
     argparser = argparse.ArgumentParser(
-        description=("The Bilateral Multi-Perspective Matching model."))
+        description=("Run the Bilateral Multi-Perspective "
+                     "Matching (biMPM) model on the paraphrase "
+                     "identification task."))
     argparser.add_argument("mode", type=str,
                            choices=["train", "predict"],
                            help=("One of {train|predict}, to "

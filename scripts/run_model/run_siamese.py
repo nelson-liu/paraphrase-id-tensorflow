@@ -19,11 +19,11 @@ logger = logging.getLogger(__name__)
 
 def main():
     project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
+
     # Parse config arguments
     argparser = argparse.ArgumentParser(
-        description=("Baseline Siamese BiLSTM model "
-                     "for question duplicate "
-                     "detection."))
+        description=("Run a baseline Siamese BiLSTM model "
+                     "for paraphrase identification."))
     argparser.add_argument("mode", type=str,
                            choices=["train", "predict"],
                            help=("One of {train|predict}, to "

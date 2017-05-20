@@ -18,8 +18,6 @@ class DataManager():
     def __init__(self, instance_type):
         self.data_indexer = DataIndexer()
         self.instance_type = instance_type
-        # List of lists of filenames that self.data_indexer
-        # has been fit on.
         self.data_indexer_fitted = False
         self.training_data_max_lengths = {}
 

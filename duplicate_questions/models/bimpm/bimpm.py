@@ -384,7 +384,7 @@ class BiMPM(BaseTFModel):
         # Apply the bilateral matching function to the embedded sentence
         # one and the embedded sentence two.
         with tf.variable_scope("matching_layer"):
-            # Shapes: (batch_size, num_sentence_words, 13*multiperspective_dims)
+            # Shapes: (batch_size, num_sentence_words, 8*multiperspective_dims)
             match_one_to_two_out, match_two_to_one_out = bilateral_matching(
                 d_sentence_one_fw_representation, d_sentence_one_bw_representation,
                 d_sentence_two_fw_representation, d_sentence_two_bw_representation,
