@@ -3,8 +3,7 @@
 
 # paraphrase-id-tensorflow
 
-Various models and code for paraphrase identification, natural language inference,
-and semantic textual similarity tasks, implemented in Tensorflow (1.1.0).
+Various models and code for paraphrase identification implemented in Tensorflow (1.1.0).
 
 I took great care to document the code and explain what I'm doing at various
 steps throughout the models; hopefully it'll be didactic example code for those
