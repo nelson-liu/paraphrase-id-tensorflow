@@ -449,6 +449,6 @@ class DataManager():
                 # Now, we want to take the instance and convert it into
                 # NumPy arrays suitable for validation.
                 inputs = indexed_test_instance.as_testing_data(mode=mode)
-
                 yield inputs
+
         return _get_test_data_generator, test_dataset_size

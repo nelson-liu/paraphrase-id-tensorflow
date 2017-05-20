@@ -285,7 +285,7 @@ class BaseTFModel:
             saver.restore(sess, last_checkpoint)
             logger.info("Successfully loaded {}!".format(last_checkpoint))
 
-            # Get a generator of train batches
+            # Get a generator of test batches
             test_batch_gen = DataManager.get_batch_generator(
                 get_test_instance_generator, batch_size)
 
