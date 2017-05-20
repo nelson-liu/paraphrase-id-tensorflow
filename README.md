@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.com/nelson-liu/quora_duplicate_questions.svg?token=nHesW4GKxvzu1T87bps4&branch=master)](https://travis-ci.com/nelson-liu/quora_duplicate_questions)
-[![codecov](https://codecov.io/gh/nelson-liu/quora_duplicate_questions/branch/master/graph/badge.svg?token=WdeMLb9nuw)](https://codecov.io/gh/nelson-liu/quora_duplicate_questions)
+[![Build Status](https://travis-ci.org/nelson-liu/paraphrase-id-tensorflow.svg?branch=master)](https://travis-ci.org/nelson-liu/paraphrase-id-tensorflow)
+[![codecov](https://codecov.io/gh/nelson-liu/paraphrase-id-tensorflow/branch/master/graph/badge.svg)](https://codecov.io/gh/nelson-liu/paraphrase-id-tensorflow)
 
 # paraphrase-id-tensorflow
 
@@ -65,6 +65,11 @@ make glove
 
 which will download pretrained Glove vectors to `data/external/`. Extract the
 files in that same directory.
+
+## Contributors
+
+- [Nelson Liu](http://nelsonliu.me)
+- [Omar Khan](https://github.com/ohkhan)
 
 ### Quora Question Pairs
 
