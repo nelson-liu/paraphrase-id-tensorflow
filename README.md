@@ -24,7 +24,10 @@ So far, this repo has implemented:
   from
   [Wang, Zhiguo et al. "Bilateral Multi-Perspective Matching for Natural Language Sentences." CoRR abs/1702.03814 (2017)](https://www.semanticscholar.org/paper/Bilateral-Multi-Perspective-Matching-for-Natural-L-Wang-Hamza/b9d220520a5da7d302107aacfe875b8e2977fdbe).
   
-  PR's to add more models / optimize or patch existing ones are more than welcome!
+PR's to add more models / optimize or patch existing ones are more than welcome!
+
+A lot of the data processing code is taken from / inspired by [allenai/deep_qa](https://github.com/allenai/deep_qa),
+go check them out if you like how this project is structured!
 
 ## Installation
 
@@ -66,11 +69,6 @@ make glove
 which will download pretrained Glove vectors to `data/external/`. Extract the
 files in that same directory.
 
-## Contributors
-
-- [Nelson Liu](http://nelsonliu.me)
-- [Omar Khan](https://github.com/ohkhan)
-
 ### Quora Question Pairs
 
 To use the Quora Question Pairs data, download the dataset from
@@ -94,6 +92,10 @@ To train a model or load + predict with a model, then run the scripts in
 documentation about the parameters they take by running `python <script_path>
 -h`
 
+## Contributors
+
+- [Nelson Liu](http://nelsonliu.me)
+- [Omar Khan](https://github.com/ohkhan)
 
 ## Contributing
 
