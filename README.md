@@ -23,7 +23,7 @@ So far, this repo has implemented:
   from
   [Wang, Zhiguo et al. "Bilateral Multi-Perspective Matching for Natural Language Sentences." CoRR abs/1702.03814 (2017)](https://www.semanticscholar.org/paper/Bilateral-Multi-Perspective-Matching-for-Natural-L-Wang-Hamza/b9d220520a5da7d302107aacfe875b8e2977fdbe).
   
-PR's to add more models / optimize or patch existing ones are more than welcome!
+PR's to add more models / optimize or patch existing ones are more than welcome! The bulk of the model code resides in [duplicate_questions/models](https://github.com/nelson-liu/paraphrase-id-tensorflow/tree/master/duplicate_questions/models)
 
 A lot of the data processing code is taken from / inspired by [allenai/deep_qa](https://github.com/allenai/deep_qa),
 go check them out if you like how this project is structured!
