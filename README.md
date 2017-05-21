@@ -91,6 +91,28 @@ To train a model or load + predict with a model, then run the scripts in
 documentation about the parameters they take by running `python <script_path>
 -h`
 
+Here's an example run command for the baseline Siamese BiLSTM:
+
+```
+python scripts/run_model/run_siamese.py train --share_encoder_weights --model_name=baseline_siamese --run_id=0
+```
+
+Here's an example run command for the Siamese BiLSTM with matching layer:
+
+```
+python scripts/run_model/run_siamese_matching_bilstm.py train --share_encoder_weights --model_name=siamese_matching --run_id=0
+```
+
+
+Here's an example run command for the BiMPM model:
+
+```
+python scripts/run_model/run_bimpm.py train --early_stopping_patience=5 --model_name=biMPM --run_id=0
+```
+
+Note that the defaults might not be ideal for your use, so feel free to turn the
+knobs however you like.
+
 ## Contributors
 
 - [Nelson Liu](http://nelsonliu.me)

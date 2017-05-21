@@ -121,7 +121,7 @@ def main():
                                  "predicting, you probably want this "
                                  "to be the same as the train run_id"))
     argparser.add_argument("--reweight_predictions_for_kaggle", action="store_true",
-                           help=("Only relevant when predicting. Whether to"
+                           help=("Only relevant when predicting. Whether to "
                                  "reweight the prediction probabilities to "
                                  "account for class proportion discrepancy "
                                  "between train and test."))
