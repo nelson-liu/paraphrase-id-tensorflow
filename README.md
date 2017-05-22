@@ -30,8 +30,8 @@ go check them out if you like how this project is structured!
 
 ## Installation
 
-This project has been tested on Python 3.5, and the package requirements are
-in [`requirements.txt`](./requirements.txt).
+This project was developed in and has been tested on **Python 3.5** (it likely doesn't work with other versions of Python), 
+and the package requirements are in [`requirements.txt`](./requirements.txt).
 
 To install the requirements:
 
