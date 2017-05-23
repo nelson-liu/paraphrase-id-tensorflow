@@ -39,11 +39,18 @@ To install the requirements:
 pip install -r requirements.txt
 ```
 
+Note that after installing the requirements, you have to download the necessary NLTK
+data by running (in your shell):
+
+```
+python -m nltk.downloader punkt
+```
+
 ### GPU Training and Inference
 
 Note that the [`requirements.txt`](./requirements.txt) file specify `tensorflow`
-as a dependency, which is a CPU-bound version of tensorflow. If you have a gpu,
-you should uninstall this CPU tensorflow and install the GPU version by running:
+as a dependency, which is a CPU-bound version of tensorflow. If you have a GPU,
+you should uninstall this CPU TensorFlow and install the GPU version by running:
 
 ```
 pip uninstall tensorflow
