@@ -323,17 +323,19 @@ class IndexedSTSInstance(IndexedInstance):
         Transforms the instance into a collection of NumPy
         arrays suitable for use as testing data in the model.
 
+        Parameters
+        ----------
+        mode: str, optional (default="word")
+            String describing whether to return the word-level representations,
+            character-level representations, or both. One of "word",
+            "character", or "word+character".
+
         Returns
         -------
         data_tuple: tuple
             The first element of this tuple has the NumPy array
             of the first sentence, and the second element has the
             NumPy array of the second sentence.
-
-        mode: str, optional (default="word")
-            String describing whether to return the word-level representations,
-            character-level representations, or both. One of "word",
-            "character", or "word+character"
         """
         if mode not in set(["word", "character", "word+character"]):
             raise ValueError("Input mode was {}, expected \"word\","
